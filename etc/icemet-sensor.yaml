@@ -1,0 +1,23 @@
+# ICEMET Sensor config
+#
+
+# Files
+save_path: "~/.icemet"
+save_type: "png"
+
+# Sensor settings
+sensor_id: 1
+camera_id: 0
+laser_port: "COM15"
+sensor_restart: -1
+
+# FTP settings
+ftp_host: "localhost"
+ftp_port: 21
+ftp_user: "icemet"
+ftp_passwd: ""
+ftp_path: "."
+
+# Measurement settings
+measure_fps: 1
+measure_len: 60

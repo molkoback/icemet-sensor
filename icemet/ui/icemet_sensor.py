@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from icemet import __version__
 from icemet.sender import Sender
 from icemet.sensor import Sensor
@@ -44,7 +42,7 @@ def _init_logging(level):
 	ch.setFormatter(formatter)
 	root.addHandler(ch)
 
-if __name__ == "__main__":
+def main():
 	args = _parse_args()
 	if args.version:
 		sys.stdout.write(_version_str)

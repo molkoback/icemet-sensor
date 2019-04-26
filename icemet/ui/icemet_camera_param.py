@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from icemet.camera import Camera
 
 import argparse
@@ -12,7 +10,7 @@ def _parse_args():
 	parser.add_argument("-o", "--output", type=str, help="output file (.json)", metavar="str")
 	return parser.parse_args()
 
-if __name__ == "__main__":
+def main():
 	args = _parse_args()
 	
 	cam = Camera(args.camera)

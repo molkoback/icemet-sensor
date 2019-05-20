@@ -1,4 +1,4 @@
-from icemet.camera import Camera
+from icemet_sensor.camera import Camera
 
 import argparse
 import json
@@ -16,14 +16,14 @@ def main():
 	cam = Camera(args.camera)
 	params = cam.params()
 	for name, val in params.items():
-		print("%s: %s" % (name, val))
+		print("{}: {}".format(name, val))
 	print()
 	
 	if args.output:
 		with open(args.output, "w") as fp:
 			json.dump(params, fp, sort_keys=True, indent=4)
-		print("Parameters saved to '%s'" % args.output)
+		print("Parameters saved to '{}'".format(args.output))
 	if args.input:
 		with open(args.input) as fp:
 			cam.set_params(json.load(fp))
-		print("Parameters loaded from '%s'" % args.input)
+		print("Parameters loaded from '{}'".format(args.input))

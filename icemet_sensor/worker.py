@@ -1,4 +1,4 @@
-from icemet.data import Atomic
+from icemet_sensor.data import Atomic
 
 import logging
 import time

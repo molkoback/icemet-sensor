@@ -46,7 +46,7 @@ class Laser:
 				self._ser.close()
 				raise Exception()
 		except:
-			raise LaserException("Couldn't connect to laser at '%s'" % self._ser.port)
+			raise LaserException("Couldn't connect to laser at '{}'".format(self._ser.port))
 	
 	def _close(self):
 		self._ser.close()
@@ -63,7 +63,7 @@ class Laser:
 		for param in params:
 			ret, _ = self._write(param)
 			if not ret:
-				raise LaserException("Failed laser parameter '%s'" % param)
+				raise LaserException("Failed laser parameter '{}'".format(param))
 			time.sleep(self._delay)
 		self._close()
 	

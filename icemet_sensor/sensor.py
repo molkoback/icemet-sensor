@@ -1,7 +1,7 @@
-from icemet.camera import Camera
-from icemet.data import Stack
-from icemet.laser import Laser
-from icemet.worker import Worker
+from icemet_sensor.camera import Camera
+from icemet_sensor.data import Stack
+from icemet_sensor.laser import Laser
+from icemet_sensor.worker import Worker
 
 import time
 

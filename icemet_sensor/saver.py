@@ -1,7 +1,6 @@
-from icemet.file import File
-from icemet.worker import Worker
+from icemet_sensor.worker import Worker
 
-import cv2
+from icemet.io import File, save_image
 
 from datetime import datetime
 import os
@@ -19,14 +18,14 @@ class Saver(Worker):
 	def init(self):
 		# Create path
 		if not os.path.exists(self.cfg.save.path):
-			self.log.info("Creating path '%s'" % self.cfg.save.path)
+			self.log.info("Creating path '{}'".format(self.cfg.save.path))
 			os.makedirs(self.cfg.save.path)
-		self.log.info("Save path %s" % self.cfg.save.path)
+		self.log.info("Save path {}".format(self.cfg.save.path))
 		
 		# Set timers
 		if self.start_time is None:
 			self.start_time = datetime.now()
-		self.log.info("Start time %s" % self.start_time)
+		self.log.info("Start time {}".format(self.start_time))
 		self._time_next = datetime.timestamp(self.start_time)
 	
 	def loop(self):
@@ -37,10 +36,11 @@ class Saver(Worker):
 		
 		# Save image
 		dt = datetime.utcfromtimestamp(im.stamp)
-		f = File(self.cfg.sensor.id, dt, self._frame, False)
-		cv2.imwrite(self.cfg.save.tmp, im.data)
-		os.rename(self.cfg.save.tmp, f.path(self.cfg.save.path, self.cfg.save.type))
-		self.log.info("SAVED %s" % f)
+		f = File(self.cfg.sensor.id, dt, self._frame)
+		save_image(self.cfg.save.tmp, im.data)
+		path = f.path(root=self.cfg.save.path, ext=self.cfg.save.type, subdirs=False)
+		os.rename(self.cfg.save.tmp, path)
+		self.log.info("SAVED {}".format(f.name))
 		
 		# Update counters
 		self._time_next += self.cfg.meas.delay

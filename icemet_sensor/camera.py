@@ -52,7 +52,7 @@ class Camera:
 		if idx < self.cam_list.GetSize():
 			self.cam = self.cam_list.GetByIndex(idx)
 		else:
-			raise CameraException("Camera not found '%d'" % idx)
+			raise CameraException("Camera not found '{}'".format(idx))
 		self.cam.Init()
 		
 		# Parameters

@@ -1,5 +1,6 @@
-from icemet.file import File
-from icemet.worker import Worker
+from icemet_sensor.worker import Worker
+
+from icemet.io import File
 
 from ftplib import FTP
 import os
@@ -24,10 +25,10 @@ class Sender(Worker):
 			self._ftp.login(user=self.cfg.ftp.user, passwd=self.cfg.ftp.passwd)
 			
 			if self._connected:
-				self.log.debug("Connected to %s:%d" % (self.cfg.ftp.host, self.cfg.ftp.port))
+				self.log.debug("Connected to {}:{}".format(self.cfg.ftp.host, self.cfg.ftp.port))
 				return True
 		except:
-			self.log.warning("Couldn't connect to %s:%d" % (self.cfg.ftp.host, self.cfg.ftp.port))
+			self.log.warning("Couldn't connect to {}:{}".format(self.cfg.ftp.host, self.cfg.ftp.port))
 		return False
 	
 	def _disconnect(self):
@@ -44,7 +45,7 @@ class Sender(Worker):
 				pass
 		return False
 	
-	def _findFiles(self):
+	def _find_files(self):
 		files = []
 		for fn in os.listdir(self.cfg.save.path):
 			path = os.path.join(self.cfg.save.path, fn)
@@ -57,17 +58,17 @@ class Sender(Worker):
 		return files
 	
 	def init(self):
-		self.log.info("FTP server %s:%d" % (self.cfg.ftp.host, self.cfg.ftp.port))
+		self.log.info("FTP server {}:{}".format(self.cfg.ftp.host, self.cfg.ftp.port))
 		self._connect()
 	
 	def loop(self):
-		for f in self._findFiles():
-			fn_in = f.path(self.cfg.save.path, self.cfg.save.type)
-			fn_out = f.path(self.cfg.ftp.path, self.cfg.save.type)
+		for f in self._find_files():
+			fn_in = f.path(root=self.cfg.save.path, ext=self.cfg.save.type, subdirs=False)
+			fn_out = f.path(root=self.cfg.ftp.path, ext=self.cfg.save.type, subdirs=False)
 			if self.quit.get() or not self._send(fn_in, fn_out):
 				break
 			os.remove(fn_in)
-			self.log.debug("SENT %s" % f)
+			self.log.debug("SENT {}".format(f.name))
 		return True
 	
 	def cleanup(self):

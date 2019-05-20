@@ -1,4 +1,4 @@
-from icemet import __version__
+from icemet_sensor import __version__
 
 from setuptools import setup, find_packages
 
@@ -24,11 +24,11 @@ setup(
 	
 	entry_points={
 		"console_scripts": [
-			"icemet-sensor = icemet.ui.icemet_sensor:main",
-			"icemet-camera-param = icemet.ui.icemet_camera_param:main",
+			"icemet-sensor = icemet_sensor.ui.icemet_sensor:main",
+			"icemet-camera-param = icemet_sensor.ui.icemet_camera_param:main",
 		]
 	},
-		
+	
 	classifiers=[
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",

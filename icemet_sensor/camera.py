@@ -1,6 +1,7 @@
 import numpy as np
 import PySpin
 
+import gc
 import time
 
 class CameraException(Exception):
@@ -76,6 +77,9 @@ class Camera:
 		res = self.cam.GetNextImage()
 		data = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
 		stamp = (res.GetTimeStamp() - self._start_stamp) / 10**9 + self._start_time
+		res.Release()
+		del res
+		gc.collect()
 		return type("Image", (object,), {"data": data, "stamp": stamp})
 	
 	def _traverse(self, node, params):

@@ -7,9 +7,15 @@ save_type: "png"
 
 # Sensor settings
 sensor_id: 1
-camera_id: 0
-laser_port: "COM15"
 sensor_restart: -1
+
+# Cameras: spin{id}
+camera_type: "spin"
+camera_args: {"id": 0}
+
+# Lasers: picolas{port}, icemet{}
+laser_type: "icemet"
+laser_args: {}
 
 # FTP settings
 ftp_host: "localhost"

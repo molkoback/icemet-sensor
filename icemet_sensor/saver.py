@@ -1,6 +1,7 @@
 from icemet_sensor.worker import Worker
 
-from icemet.io import File, save_image
+from icemet.io import File
+from icemet.img import save_image
 
 from datetime import datetime
 import os

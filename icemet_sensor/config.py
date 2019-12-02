@@ -2,6 +2,8 @@ from icemet.cfg import Config, ConfigException
 
 import os
 
+default_file = os.path.join(os.path.expanduser("~"), ".icemet-sensor.yaml")
+
 class SensorConfig(Config):
 	def __init__(self, fn):
 		try:
@@ -17,10 +19,12 @@ class SensorConfig(Config):
 				"restart": self.d["sensor_restart"]
 			})
 			self.camera = type("SensorParam", (object,), {
-				"id": self.d["camera_id"]
+				"type": self.d["camera_type"],
+				"kwargs": self.d["camera_args"]
 			})
 			self.laser = type("SensorParam", (object,), {
-				"port": self.d["laser_port"]
+				"type": self.d["laser_type"],
+				"kwargs": self.d["laser_args"]
 			})
 			self.ftp = type("FTPParam", (object,), {
 				"host": self.d["ftp_host"],

@@ -1,3 +1,5 @@
+from icemet_sensor.laser import Laser, LaserException
+
 import serial
 
 import time
@@ -20,18 +22,15 @@ _default_off_params = [
 	"laseroff"
 ]
 
-class LaserException(Exception):
-	pass
-
-class Laser:
-	def __init__(self, port, **kwargs):
+class PicoLAS(Laser):
+	def __init__(self, **kwargs):
 		self.on_params = kwargs.get("on_params", _default_on_params)
 		self.off_params = kwargs.get("off_params", _default_off_params)
 		
 		self._delay = 0.010
 		
 		self._ser = serial.Serial()
-		self._ser.port = port
+		self._ser.port = kwargs.get("port", "COM3")
 		self._ser.baudrate = 115200
 		self._ser.bytesize = serial.EIGHTBITS
 		self._ser.parity = serial.PARITY_EVEN
@@ -46,7 +45,7 @@ class Laser:
 				self._ser.close()
 				raise Exception()
 		except:
-			raise LaserException("Couldn't connect to laser at '{}'".format(self._ser.port))
+			raise LaserException("Couldn't connect to PicoLAS at '{}'".format(self._ser.port))
 	
 	def _close(self):
 		self._ser.close()
@@ -63,7 +62,7 @@ class Laser:
 		for param in params:
 			ret, _ = self._write(param)
 			if not ret:
-				raise LaserException("Failed laser parameter '{}'".format(param))
+				raise LaserException("Failed PicoLAS parameter '{}'".format(param))
 			time.sleep(self._delay)
 		self._close()
 	

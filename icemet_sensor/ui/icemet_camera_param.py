@@ -1,10 +1,12 @@
-from icemet_sensor.camera import Camera
+from icemet_sensor.camera import createCamera
+from icemet_sensor.config import default_file, SensorConfig
 
 import argparse
 import json
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET camera parameter utility")
+	parser.add_argument("cfg", nargs="?", default=default_file, help="config file", metavar="str")
 	parser.add_argument("-c", "--camera", type=int, default=0, help="camera id", metavar="int")
 	parser.add_argument("-i", "--input", type=str, help="input file (.json)", metavar="str")
 	parser.add_argument("-o", "--output", type=str, help="output file (.json)", metavar="str")
@@ -12,8 +14,9 @@ def _parse_args():
 
 def main():
 	args = _parse_args()
+	cfg = SensorConfig(args.cfg)
 	
-	cam = Camera(args.camera)
+	cam = createCamera(cfg.camera.type, **cfg.camera.kwargs)
 	params = cam.params()
 	for name, val in params.items():
 		print("{}: {}".format(name, val))

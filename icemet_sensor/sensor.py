@@ -1,6 +1,6 @@
-from icemet_sensor.camera import Camera
+from icemet_sensor.camera import createCamera
 from icemet_sensor.data import Stack
-from icemet_sensor.laser import Laser
+from icemet_sensor.laser import createLaser
 from icemet_sensor.worker import Worker
 
 import time
@@ -27,8 +27,8 @@ class Sensor(Worker):
 		self.log.debug("Sensor stopped")
 	
 	def init(self):
-		self._lsr = Laser(self.cfg.laser.port)
-		self._cam = Camera(self.cfg.camera.id)
+		self._lsr = createLaser(self.cfg.laser.type, **self.cfg.laser.kwargs)
+		self._cam = createCamera(self.cfg.camera.type, **self.cfg.camera.kwargs)
 		self._start()
 	
 	def loop(self):

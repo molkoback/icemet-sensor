@@ -1,13 +1,11 @@
+from icemet_sensor.camera import Camera, CameraException
+
 import numpy as np
 import PySpin
 
-import gc
 import time
 
-class CameraException(Exception):
-	pass
-
-class Parameter:
+class SpinParameter:
 	def __init__(self, node):
 		self.node = node
 		self.type = self.node.GetPrincipalInterfaceType()
@@ -41,19 +39,20 @@ class Parameter:
 		elif self.type == PySpin.intfIEnumeration:
 			PySpin.CEnumerationPtr(self.node).SetIntValue(val)
 
-class Camera:
+class SpinCamera(Camera):
 	system = None
 	cam_list = None
 	cam = None
 	
-	def __init__(self, idx, **kwargs):
+	def __init__(self, **kwargs):
 		# Camera
 		self.system = PySpin.System.GetInstance()
 		self.cam_list = self.system.GetCameras()
-		if idx < self.cam_list.GetSize():
-			self.cam = self.cam_list.GetByIndex(idx)
+		id = int(kwargs.get("id", 0))
+		if id < self.cam_list.GetSize():
+			self.cam = self.cam_list.GetByIndex(id)
 		else:
-			raise CameraException("Camera not found '{}'".format(idx))
+			raise CameraException("SpinCamera not found '{}'".format(id))
 		self.cam.Init()
 		
 		# Parameters
@@ -77,9 +76,6 @@ class Camera:
 		res = self.cam.GetNextImage()
 		data = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
 		stamp = (res.GetTimeStamp() - self._start_stamp) / 10**9 + self._start_time
-		res.Release()
-		del res
-		gc.collect()
 		return type("Image", (object,), {"data": data, "stamp": stamp})
 	
 	def _traverse(self, node, params):
@@ -90,7 +86,7 @@ class Camera:
 			if child.GetPrincipalInterfaceType() == PySpin.intfICategory:
 				self._traverse(child, params)
 			else:
-				param = Parameter(child)
+				param = SpinParameter(child)
 				if not param.val() is None and PySpin.IsWritable(child):
 					params.append(param)
 	

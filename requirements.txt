@@ -1,4 +1,2 @@
 icemet-python>=1.0.0
 numpy>=1.16.0
-pyserial>=3.4
-spinnaker-python>=1.20.0

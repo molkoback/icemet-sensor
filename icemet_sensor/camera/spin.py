@@ -1,4 +1,4 @@
-from icemet_sensor.camera import Camera, CameraException
+from icemet_sensor.camera import CameraResult, Camera, CameraException
 
 import numpy as np
 import PySpin
@@ -44,21 +44,17 @@ class SpinCamera(Camera):
 	cam_list = None
 	cam = None
 	
-	def __init__(self, **kwargs):
-		# Camera
+	def __init__(self, id=0, params=None):
 		self.system = PySpin.System.GetInstance()
 		self.cam_list = self.system.GetCameras()
-		id = int(kwargs.get("id", 0))
 		if id < self.cam_list.GetSize():
 			self.cam = self.cam_list.GetByIndex(id)
 		else:
 			raise CameraException("SpinCamera not found '{}'".format(id))
 		self.cam.Init()
 		
-		# Parameters
-		params = kwargs.get("params", {})
 		if params:
-			self.set_params(params)
+			self.load_params(params)
 		self.cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
 		
 		self._start_time = None
@@ -74,9 +70,9 @@ class SpinCamera(Camera):
 	
 	def read(self):
 		res = self.cam.GetNextImage()
-		data = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
+		image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
 		stamp = (res.GetTimeStamp() - self._start_stamp) / 10**9 + self._start_time
-		return type("Image", (object,), {"data": data, "stamp": stamp})
+		return CameraResult(image=image, time=stamp)
 	
 	def _traverse(self, node, params):
 		category = PySpin.CCategoryPtr(node)
@@ -95,15 +91,18 @@ class SpinCamera(Camera):
 		self._traverse(self.cam.GetNodeMap().GetNode("Root"), params)
 		return params
 	
-	def params(self):
-		d = {}
+	def save_params(self, fn):
+		obj = {}
 		for param in self._get_params():
-			d[param.name] = param.val()
-		return d
+			obj[param.name] = param.val()
+		with open(fn, "w") as fp:
+			json.dump(obj, fp, sort_keys=True, indent=4)
 	
-	def set_params(self, d):
+	def load_params(self, fn):
+		with open(fn) as fp:
+			obj = json.load(fp)
 		params = self._get_params()
-		for name, val in d.items():
+		for name, val in obj.items():
 			for param in params:
 				if name == param.name:
 					param.set(val)

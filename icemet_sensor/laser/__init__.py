@@ -22,5 +22,5 @@ except:
 
 def createLaser(name, **kwargs):
 	if not name in lasers:
-		raise LaserException("Invalid laser '{}'".format(name))
+		raise LaserException("Laser not installed '{}'".format(name))
 	return lasers[name](**kwargs)

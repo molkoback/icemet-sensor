@@ -31,14 +31,14 @@ class Saver(Worker):
 	
 	def loop(self):
 		# Read the newest image
-		im = self.stack.pop()
-		if im is None or im.stamp < self._time_next:
+		res = self.stack.pop()
+		if res is None or res.time < self._time_next:
 			return True
 		
 		# Save image
-		dt = datetime.utcfromtimestamp(im.stamp)
+		dt = datetime.utcfromtimestamp(res.time)
 		f = File(self.cfg.sensor.id, dt, self._frame)
-		save_image(self.cfg.save.tmp, im.data)
+		save_image(self.cfg.save.tmp, res.image)
 		path = f.path(root=self.cfg.save.path, ext=self.cfg.save.type, subdirs=False)
 		os.rename(self.cfg.save.tmp, path)
 		self.log.info("SAVED {}".format(f.name))

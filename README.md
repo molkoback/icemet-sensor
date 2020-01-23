@@ -1,5 +1,5 @@
-# ICEMET Sensor
-Client software for [ICEMET sensor](https://www.oulu.fi/icemet/).
+# ICEMET-sensor
+Client software for [ICEMET-sensor](https://www.oulu.fi/icemet/).
 
 ## Installation
 Install Python requirements from `requirements.txt`.

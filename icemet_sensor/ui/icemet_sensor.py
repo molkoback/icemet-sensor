@@ -12,13 +12,13 @@ import os
 import sys
 import time
 
-_version_str = """ICEMET Sensor {version}
+_version_str = """ICEMET-sensor {version}
 
 Copyright (C) 2019 Eero Molkoselkä <eero.molkoselka@gmail.com>
 """.format(version=__version__)
 
 def _parse_args():
-	parser = argparse.ArgumentParser("ICEMET Sensor")
+	parser = argparse.ArgumentParser("ICEMET-sensor")
 	parser.add_argument("cfg", nargs="?", default=default_file, help="config file", metavar="str")
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_next_min", action="store_true", help="start at the next minute")

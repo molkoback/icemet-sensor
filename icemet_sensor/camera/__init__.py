@@ -1,6 +1,11 @@
 class CameraException(Exception):
 	pass
 
+class CameraResult:
+	def __init__(self, **kwargs):
+		self.image = kwargs.get("image", None)
+		self.time = kwargs.get("time", None)
+
 class Camera:
 	def start(self):
 		raise NotImplemented()
@@ -11,10 +16,10 @@ class Camera:
 	def read(self):
 		raise NotImplemented()
 	
-	def params(self):
+	def save_params(self, fn):
 		raise NotImplemented()
 	
-	def set_params(self, d):
+	def load_params(self, fn):
 		raise NotImplemented()
 
 cameras = {}
@@ -23,8 +28,13 @@ try:
 	cameras["spin"] = SpinCamera
 except:
 	pass
+try:
+	from icemet_sensor.camera.pylon import PylonCamera
+	cameras["pylon"] = PylonCamera
+except:
+	pass
 
 def createCamera(name, **kwargs):
 	if not name in cameras:
-		raise CameraException("Invalid camera '{}'".format(name))
+		raise CameraException("Camera not installed '{}'".format(name))
 	return cameras[name](**kwargs)

@@ -9,7 +9,7 @@ save_type: "png"
 sensor_id: 1
 sensor_restart: -1
 
-# Cameras: spin{id}
+# Cameras: spin{id}, pylon{}
 camera: {"spin": {
 "id": 0
 }}

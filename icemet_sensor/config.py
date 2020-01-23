@@ -18,14 +18,8 @@ class SensorConfig(Config):
 				"id": self.d["sensor_id"],
 				"restart": self.d["sensor_restart"]
 			})
-			self.camera = type("SensorParam", (object,), {
-				"type": self.d["camera_type"],
-				"kwargs": self.d["camera_args"]
-			})
-			self.laser = type("SensorParam", (object,), {
-				"type": self.d["laser_type"],
-				"kwargs": self.d["laser_args"]
-			})
+			self.camera = self._cfg_obj(self.d["camera"], "CameraParam")
+			self.laser = self._cfg_obj(self.d["laser"], "LaserParam")
 			self.ftp = type("FTPParam", (object,), {
 				"host": self.d["ftp_host"],
 				"port": int(self.d["ftp_port"]),
@@ -38,5 +32,12 @@ class SensorConfig(Config):
 				"len": self.d["measure_len"],
 				"n": float("inf")
 			})
-		except:
-			raise ConfigException("Couldn't parse config file '{}'".format(fn))
+		except Exception as e:
+			raise ConfigException("Couldn't parse config file '{}'\n{}".format(fn, e))
+		
+	def _cfg_obj(self, obj, clsname):
+		k = next(iter(obj))
+		return type(clsname, (object,), {
+			"name": k,
+			"kwargs": obj[k]
+		})

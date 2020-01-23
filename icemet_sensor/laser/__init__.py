@@ -8,15 +8,19 @@ class Laser:
 	def off(self):
 		raise NotImplemented()
 
-from icemet_sensor.laser.icemet_laser import ICEMETLaser
-from icemet_sensor.laser.picolas import PicoLAS
-
-_lasers = {
-	"icemet": ICEMETLaser,
-	"picolas": PicoLAS
-}
+lasers = {}
+try:
+	from icemet_sensor.laser.icemet_laser import ICEMETLaser
+	lasers["icemet"] = ICEMETLaser
+except:
+	pass
+try:
+	from icemet_sensor.laser.picolas import PicoLAS
+	lasers["picolas"] = PicoLAS
+except:
+	pass
 
 def createLaser(name, **kwargs):
-	if not name in _lasers:
+	if not name in lasers:
 		raise LaserException("Invalid laser '{}'".format(name))
-	return _lasers[name](**kwargs)
+	return lasers[name](**kwargs)

@@ -27,8 +27,8 @@ class Sensor(Worker):
 		self.log.debug("Sensor stopped")
 	
 	def init(self):
-		self._lsr = createLaser(self.cfg.laser.type, **self.cfg.laser.kwargs)
-		self._cam = createCamera(self.cfg.camera.type, **self.cfg.camera.kwargs)
+		self._lsr = createLaser(self.cfg.laser.name, **self.cfg.laser.kwargs)
+		self._cam = createCamera(self.cfg.camera.name, **self.cfg.camera.kwargs)
 		self._start()
 	
 	def loop(self):

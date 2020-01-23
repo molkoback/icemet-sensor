@@ -17,13 +17,14 @@ class Camera:
 	def set_params(self, d):
 		raise NotImplemented()
 
-from icemet_sensor.camera.spin import SpinCamera
-
-_cameras = {
-	"spin": SpinCamera
-}
+cameras = {}
+try:
+	from icemet_sensor.camera.spin import SpinCamera
+	cameras["spin"] = SpinCamera
+except:
+	pass
 
 def createCamera(name, **kwargs):
-	if not name in _cameras:
+	if not name in cameras:
 		raise CameraException("Invalid camera '{}'".format(name))
-	return _cameras[name](**kwargs)
+	return cameras[name](**kwargs)

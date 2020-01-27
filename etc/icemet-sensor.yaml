@@ -9,12 +9,12 @@ save_type: "png"
 sensor_id: 1
 sensor_restart: -1
 
-# Cameras: spin{id}, pylon{}
+# Cameras: dummy{}, spin{id}, pylon{}
 camera: {"spin": {
 "id": 0
 }}
 
-# Lasers: picolas{port}, icemet{}
+# Lasers: dummy{}, picolas{port}, icemet{}
 laser: {"icemet": {}}
 
 # FTP settings

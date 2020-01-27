@@ -1,3 +1,7 @@
+import numpy as np
+
+import time
+
 class CameraException(Exception):
 	pass
 
@@ -22,7 +26,20 @@ class Camera:
 	def load_params(self, fn):
 		raise NotImplemented()
 
-cameras = {}
+class DummyCamera:
+	def start(self):
+		pass
+	
+	def stop(self):
+		pass
+	
+	def read(self):
+		return CameraResult(
+			image=np.random.randint(0, high=255, size=(480, 640), dtype=np.uint8),
+			time=time.time()
+		)
+
+cameras = {"dummy": DummyCamera}
 try:
 	from icemet_sensor.camera.spin import SpinCamera
 	cameras["spin"] = SpinCamera

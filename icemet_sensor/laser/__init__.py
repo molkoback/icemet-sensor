@@ -8,7 +8,14 @@ class Laser:
 	def off(self):
 		raise NotImplemented()
 
-lasers = {}
+class DummyLaser(Laser):
+	def on(self):
+		pass
+	
+	def off(self):
+		pass
+
+lasers = {"dummy": DummyLaser}
 try:
 	from icemet_sensor.laser.icemet_laser import ICEMETLaser
 	lasers["icemet"] = ICEMETLaser

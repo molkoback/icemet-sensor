@@ -1,2 +1,2 @@
-icemet-python>=1.0.0
+icemet-python>=1.1.0
 numpy>=1.16.0

@@ -27,6 +27,11 @@ class Camera:
 		raise NotImplemented()
 
 class DummyCamera:
+	def __init__(self, size=(640, 480), low=0, high=255):
+		self.size = size
+		self.low = low
+		self.high = high
+	
 	def start(self):
 		pass
 	
@@ -35,7 +40,11 @@ class DummyCamera:
 	
 	def read(self):
 		return CameraResult(
-			image=np.random.randint(0, high=255, size=(480, 640), dtype=np.uint8),
+			image=np.random.randint(
+				self.low, high=self.high,
+				size=(self.size[1], self.size[0]),
+				dtype=np.uint8
+			),
 			time=time.time()
 		)
 

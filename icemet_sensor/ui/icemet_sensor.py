@@ -30,14 +30,15 @@ def _parse_args():
 	return parser.parse_args()
 
 def _init_logging(level):
+	if level == logging.DEBUG:
+		fmt = "[%(asctime)s]<%(name)s>(%(levelname)s) %(message)s"
+	else:
+		fmt = "[%(asctime)s] %(message)s"
 	root = logging.getLogger()
 	root.setLevel(level)
 	ch = logging.StreamHandler(sys.stdout)
 	ch.setLevel(level)
-	formatter = logging.Formatter(
-		"[%(asctime)s]<%(name)s>(%(levelname)s) %(message)s",
-		datefmt="%H:%M:%S"
-	)
+	formatter = logging.Formatter(fmt, datefmt="%H:%M:%S")
 	ch.setFormatter(formatter)
 	root.addHandler(ch)
 

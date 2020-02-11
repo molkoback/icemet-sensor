@@ -4,6 +4,7 @@ from icemet.io import File
 
 from ftplib import FTP
 import os
+import time
 
 class Sender(Worker):
 	def __init__(self, *args, **kwargs):
@@ -47,8 +48,8 @@ class Sender(Worker):
 	
 	def _find_files(self):
 		files = []
-		for fn in os.listdir(self.cfg.save.path):
-			path = os.path.join(self.cfg.save.path, fn)
+		for fn in os.listdir(self.cfg.save.dir):
+			path = os.path.join(self.cfg.save.dir, fn)
 			if os.path.isfile(path) and fn.rsplit(".", 1)[-1] == self.cfg.save.type:
 				try:
 					files.append(File.frompath(fn))
@@ -63,12 +64,13 @@ class Sender(Worker):
 	
 	def loop(self):
 		for f in self._find_files():
-			fn_in = f.path(root=self.cfg.save.path, ext=self.cfg.save.type, subdirs=False)
+			t = time.time()
+			fn_in = f.path(root=self.cfg.save.dir, ext=self.cfg.save.type, subdirs=False)
 			fn_out = f.path(root=self.cfg.ftp.path, ext=self.cfg.save.type, subdirs=False)
 			if self.quit.get() or not self._send(fn_in, fn_out):
 				break
 			os.remove(fn_in)
-			self.log.debug("SENT {}".format(f.name))
+			self.log.debug("Sent {} ({:.2f} s)".format(f.name, time.time()-t))
 		return True
 	
 	def cleanup(self):

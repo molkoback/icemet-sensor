@@ -18,10 +18,10 @@ class Saver(Worker):
 	
 	def init(self):
 		# Create path
-		if not os.path.exists(self.cfg.save.path):
-			self.log.info("Creating path '{}'".format(self.cfg.save.path))
-			os.makedirs(self.cfg.save.path)
-		self.log.info("Save path {}".format(self.cfg.save.path))
+		if not os.path.exists(self.cfg.save.dir):
+			self.log.info("Creating path '{}'".format(self.cfg.save.dir))
+			os.makedirs(self.cfg.save.dir)
+		self.log.info("Save path {}".format(self.cfg.save.dir))
 		
 		# Set timers
 		if self.start_time is None:
@@ -39,7 +39,7 @@ class Saver(Worker):
 		dt = datetime.utcfromtimestamp(res.time)
 		f = File(self.cfg.sensor.id, dt, self._frame)
 		save_image(self.cfg.save.tmp, res.image)
-		path = f.path(root=self.cfg.save.path, ext=self.cfg.save.type, subdirs=False)
+		path = f.path(root=self.cfg.save.dir, ext=self.cfg.save.type, subdirs=False)
 		os.rename(self.cfg.save.tmp, path)
 		self.log.info("SAVED {}".format(f.name))
 		

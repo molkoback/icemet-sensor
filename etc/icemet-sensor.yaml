@@ -2,12 +2,22 @@
 #
 
 # Files
-save_path: "~/.icemet"
-save_type: "png"
+save: {
+dir: "~/.icemet",
+type: "png"
+}
+
+# Measurement settings
+measurement: {
+fps: 1,
+len: 60
+}
 
 # Sensor settings
-sensor_id: 1
-sensor_restart: -1
+sensor: {
+id: 1,
+restart: -1
+}
 
 # Cameras: dummy{}, spin{id}, pylon{}
 camera: {"spin": {
@@ -18,12 +28,19 @@ camera: {"spin": {
 laser: {"icemet": {}}
 
 # FTP settings
-ftp_host: "localhost"
-ftp_port: 21
-ftp_user: "icemet"
-ftp_passwd: ""
-ftp_path: "."
+ftp: {
+host: "localhost",
+port: 21,
+user: "icemet",
+passwd: "",
+path: "."
+}
 
-# Measurement settings
-measure_fps: 1
-measure_len: 60
+# Preprocessing
+preproc: {
+enable: false,
+crop: {x: 200, y: 0, w: 2048, h: 2048},
+rotate: 0,
+empty: {th_original: 40, th_preproc: 10},
+bgsub_stack_len: 7
+}

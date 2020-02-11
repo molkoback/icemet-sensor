@@ -1,4 +1,4 @@
-from icemet_sensor import __version__
+from icemet_sensor import version
 from icemet_sensor.sender import Sender
 from icemet_sensor.sensor import Sensor
 from icemet_sensor.saver import Saver
@@ -14,8 +14,8 @@ import time
 
 _version_str = """ICEMET-sensor {version}
 
-Copyright (C) 2019 Eero Molkoselkä <eero.molkoselka@gmail.com>
-""".format(version=__version__)
+Copyright (C) 2019-2020 Eero Molkoselkä <eero.molkoselka@gmail.com>
+""".format(version=version)
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")

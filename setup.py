@@ -1,4 +1,4 @@
-from icemet_sensor import __version__
+from icemet_sensor import version
 
 from setuptools import setup, find_packages
 
@@ -10,7 +10,7 @@ with open("requirements.txt") as fp:
 
 setup(
 	name="icemet-sensor",
-	version=__version__,
+	version=version,
 	packages=find_packages(),
 	
 	install_requires=requirements,

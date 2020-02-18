@@ -11,19 +11,19 @@ class CameraResult:
 		self.time = kwargs.get("time", None)
 
 class Camera:
-	def start(self):
+	def start(self) -> None:
 		raise NotImplemented()
 	
-	def stop(self):
+	def stop(self) -> None:
 		raise NotImplemented()
 	
-	def read(self):
+	def read(self) -> CameraResult:
 		raise NotImplemented()
 	
-	def save_params(self, fn):
+	def save_params(self, fn: str) -> None:
 		raise NotImplemented()
 	
-	def load_params(self, fn):
+	def load_params(self, fn: str) -> None:
 		raise NotImplemented()
 
 class DummyCamera:

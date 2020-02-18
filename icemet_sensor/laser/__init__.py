@@ -2,10 +2,10 @@ class LaserException(Exception):
 	pass
 
 class Laser:
-	def on(self):
+	def on(self) -> None:
 		raise NotImplemented()
 	
-	def off(self):
+	def off(self) -> None:
 		raise NotImplemented()
 
 class DummyLaser(Laser):

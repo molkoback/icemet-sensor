@@ -1,5 +1,6 @@
 import numpy as np
 
+import random
 import time
 
 class CameraException(Exception):
@@ -39,6 +40,7 @@ class DummyCamera:
 		pass
 	
 	def read(self):
+		time.sleep(random.randint(1, 50)/1000)
 		return CameraResult(
 			image=np.random.randint(
 				self.low, high=self.high,

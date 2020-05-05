@@ -30,6 +30,7 @@ laser: {"icemet": {}}
 
 # FTP settings
 ftp: {
+enable: false,
 host: "localhost",
 port: 21,
 user: "icemet",

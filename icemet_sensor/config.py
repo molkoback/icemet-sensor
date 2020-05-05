@@ -42,6 +42,7 @@ class SensorConfig(Config):
 		self.camera = self._cfg_obj(dict["camera"], "CameraParam")
 		self.laser = self._cfg_obj(dict["laser"], "LaserParam")
 		self.ftp = type("FTPParam", (object,), {
+			"enable": dict["ftp"]["enable"],
 			"host": dict["ftp"]["host"],
 			"port": int(dict["ftp"]["port"]),
 			"user": dict["ftp"]["user"],

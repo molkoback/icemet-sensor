@@ -76,7 +76,7 @@ def main():
 			Sensor.start(**kwargs),
 			Saver.start(**kwargs)
 		]
-		if not args.offline:
+		if not args.offline and kwargs["cfg"].ftp.enable:
 			threads.append(Sender.start(**kwargs))
 		
 		# Wait for threads

@@ -2,7 +2,7 @@ from icemet_sensor import version
 from icemet_sensor.sender import Sender
 from icemet_sensor.sensor import Sensor
 from icemet_sensor.saver import Saver
-from icemet_sensor.config import default_file, SensorConfig
+from icemet_sensor.config import default_file, create_default_file, SensorConfig
 from icemet_sensor.data import Stack, Atomic
 
 import argparse
@@ -19,7 +19,7 @@ Copyright (C) 2019-2020 Eero Molkoselkä <eero.molkoselka@gmail.com>
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")
-	parser.add_argument("cfg", nargs="?", default=default_file, help="config file", metavar="str")
+	parser.add_argument("-c", "--config", type=str, help="config file (default: {})".format(default_file), metavar="str", default=default_file)
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_next_min", action="store_true", help="start at the next minute")
 	parser.add_argument("--start_next_hour", action="store_true", help="start at the next hour")
@@ -53,9 +53,13 @@ def main():
 	
 	kwargs = {}
 	try:
+		if args.config == default_file and not os.path.exists(args.config):
+			create_default_file()
+			logging.info("Config file created '{}'".format(args.config))
+		
 		kwargs["quit"] = Atomic(False)
 		kwargs["stack"] = Stack(1)
-		kwargs["cfg"] = SensorConfig(args.cfg)
+		kwargs["cfg"] = SensorConfig(args.config)
 		
 		# Set the start time
 		if args.start:

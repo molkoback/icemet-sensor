@@ -14,6 +14,7 @@ setup(
 	packages=find_packages(),
 	
 	install_requires=requirements,
+	package_data={"icemet_sensor": ["data/*"]},
 	
 	author="Eero Molkoselkä",
 	author_email="eero.molkoselka@gmail.com",

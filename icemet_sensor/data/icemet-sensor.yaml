@@ -3,7 +3,7 @@
 
 # Files
 save: {
-dir: "~/.icemet",
+dir: "~/.icemet/files",
 type: "png"
 }
 

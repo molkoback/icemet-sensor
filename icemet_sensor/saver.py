@@ -26,7 +26,7 @@ class Saver(Worker):
 		if not os.path.exists(self.cfg.save.dir):
 			self.log.info("Creating path '{}'".format(self.cfg.save.dir))
 			os.makedirs(self.cfg.save.dir)
-		self.log.info("Save path {}".format(self.cfg.save.dir))
+		self.log.info("Save path '{}'".format(self.cfg.save.dir))
 		
 		# Set timers
 		if self.start_time is None:

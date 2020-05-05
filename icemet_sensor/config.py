@@ -1,8 +1,18 @@
+from icemet_sensor import homedir, datadir
+
 from icemet.cfg import Config, ConfigException
 
 import os
 
-default_file = os.path.join(os.path.expanduser("~"), ".icemet-sensor.yaml")
+default_file = os.path.join(homedir, "icemet-sensor.yaml")
+
+def create_default_file():
+	fn = os.path.join(datadir, "icemet-sensor.yaml")
+	with open(fn) as fp:
+		txt = fp.read()
+	os.makedirs(homedir, exist_ok=True)
+	with open(default_file, "w") as fp:
+		fp.write(txt)
 
 class SensorConfig(Config):
 	def __init__(self, fn):

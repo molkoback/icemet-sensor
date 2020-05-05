@@ -61,9 +61,12 @@ class Saver(Worker):
 		return True, im, f
 	
 	def _update_counters(self):
-		self._time_next += self.cfg.meas.delay
-		self._frame = self._frame % self.cfg.meas.len + 1
-		self._meas += int(self._frame == 1)
+		self._time_next += self.cfg.meas.burst_delay
+		self._frame = self._frame + 1
+		if self._frame > self.cfg.meas.burst_len:
+			self._frame = 1
+			self._meas += 1
+			self._time_next += self.cfg.meas.wait
 	
 	def loop(self):
 		# Read the newest image

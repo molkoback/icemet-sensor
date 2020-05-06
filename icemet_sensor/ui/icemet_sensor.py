@@ -1,7 +1,7 @@
 from icemet_sensor import version
+from icemet_sensor.manager import Manager
 from icemet_sensor.sender import Sender
 from icemet_sensor.sensor import Sensor
-from icemet_sensor.saver import Saver
 from icemet_sensor.config import default_file, create_default_file, SensorConfig
 from icemet_sensor.data import Stack, Atomic
 
@@ -74,7 +74,7 @@ def main():
 		# Start worker threads
 		threads = [
 			Sensor.start(**kwargs),
-			Saver.start(**kwargs)
+			Manager.start(**kwargs)
 		]
 		if not args.offline and kwargs["cfg"].ftp.enable:
 			threads.append(Sender.start(**kwargs))

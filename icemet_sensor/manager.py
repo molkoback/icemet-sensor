@@ -1,13 +1,13 @@
 from icemet_sensor.worker import Worker
 
-from icemet.img import BGSubStack, dynrange, rotate, save_image
-from icemet.io import File
+from icemet.img import BGSubStack, dynrange, rotate
+from icemet.file import File
 
 from datetime import datetime
 import os
 import time
 
-class Saver(Worker):
+class Manager(Worker):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs, name="SAVER", delay=0.001)
 		self.stack = kwargs["stack"]
@@ -34,31 +34,31 @@ class Saver(Worker):
 		self.log.info("Start time {}".format(self.start_time))
 		self._time_next = datetime.timestamp(self.start_time)
 	
-	def _preproc(self, im, f):
+	def _preproc(self, f):
 		empty = self.cfg.preproc.empty
 		crop = self.cfg.preproc.crop
 		
-		if empty.th_original > 0 and dynrange(im) < empty.th_original:
+		if empty.th_original > 0 and dynrange(f.image) < empty.th_original:
 			self.log.debug("Empty image")
 			return False, None, None
 		
-		im = im[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
+		f.image = f.image[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
 		
 		if self.cfg.preproc.rotate != 0:
-			im = rotate(im, self.cfg.preproc.rotate)
+			f.image = rotate(f.image, self.cfg.preproc.rotate)
 		
-		self._bgsub.push(im)
+		self._bgsub.push(f.image)
 		self._files.append(f)
 		if not self._bgsub.full:
 			return False, None, None
 		f = self._files[len(self._files)//2]
 		self._files.pop(0)
-		im = self._bgsub.meddiv()
+		f.image = self._bgsub.meddiv()
 		
-		if empty.th_preproc > 0 and dynrange(im) < empty.th_preproc:
+		if empty.th_preproc > 0 and dynrange(f.image) < empty.th_preproc:
 			self.log.debug("Empty image")
 			return False, None, None
-		return True, im, f
+		return True, f
 	
 	def _update_counters(self):
 		self._time_next += self.cfg.meas.burst_delay
@@ -76,12 +76,12 @@ class Saver(Worker):
 		
 		# Create file
 		dt = datetime.utcfromtimestamp(res.time)
-		f = File(self.cfg.sensor.id, dt, self._frame)
+		f = File(self.cfg.sensor.id, dt, self._frame, image=res.image)
 		
 		# Preprocess
 		if self.cfg.preproc.enable:
 			t = time.time()
-			ret, im, f = self._preproc(res.image, f)
+			ret, f = self._preproc(f)
 			self.log.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
 			if not ret:
 				self._update_counters()
@@ -89,7 +89,7 @@ class Saver(Worker):
 		
 		# Save image
 		t = time.time()
-		save_image(self.cfg.save.tmp, res.image)
+		f.save(self.cfg.save.tmp)
 		path = f.path(root=self.cfg.save.dir, ext=self.cfg.save.type, subdirs=False)
 		os.rename(self.cfg.save.tmp, path)
 		self.log.debug("Saved {} ({:.2f} s)".format(f.name, time.time()-t))

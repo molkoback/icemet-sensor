@@ -1,6 +1,6 @@
 from icemet_sensor.worker import Worker
 
-from icemet.io import File
+from icemet.file import File
 
 from ftplib import FTP
 import os
@@ -52,7 +52,7 @@ class Sender(Worker):
 			path = os.path.join(self.cfg.save.dir, fn)
 			if os.path.isfile(path) and fn.rsplit(".", 1)[-1] == self.cfg.save.type:
 				try:
-					files.append(File.frompath(fn))
+					files.append(File.frompath(fn, open_image=False))
 				except:
 					pass
 		files.sort()

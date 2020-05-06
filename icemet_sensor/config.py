@@ -30,6 +30,7 @@ class SensorConfig(Config):
 		})
 		self.save.tmp = os.path.join(self.save.dir, "tmp." + self.save.type)
 		self.meas = type("MeasureParam", (object,), {
+			"burst_fps": dict["measurement"]["burst_fps"],
 			"burst_delay": 1.0 / dict["measurement"]["burst_fps"],
 			"burst_len": dict["measurement"]["burst_len"],
 			"wait": dict["measurement"]["wait"],

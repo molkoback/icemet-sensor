@@ -1,1 +1,1 @@
-icemet-python>=1.2.0
+icemet-python>=1.3.0

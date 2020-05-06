@@ -1,7 +1,8 @@
 from icemet_sensor.worker import Worker
 
-from icemet.img import BGSubStack, dynrange, rotate
+from icemet.img import BGSubStack, save_image, dynrange, rotate
 from icemet.file import File
+from icemet.pkg import Package
 
 from datetime import datetime
 import os
@@ -11,15 +12,19 @@ class Manager(Worker):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs, name="SAVER", delay=0.001)
 		self.stack = kwargs["stack"]
+		
 		self.start_time = kwargs.get("start_time", None)
 		self._time_next = None
+		
 		self._frame = 1
 		self._meas = 1
+		
+		self._pkg_file = None
 		
 		if self.cfg.preproc.enable:
 			size = (self.cfg.preproc.crop.h, self.cfg.preproc.crop.w)
 			self._bgsub = BGSubStack(self.cfg.preproc.bgsub_stack_len, size)
-			self._files = []
+			self._bgsub_files = []
 	
 	def init(self):
 		# Create path
@@ -40,7 +45,7 @@ class Manager(Worker):
 		
 		if empty.th_original > 0 and dynrange(f.image) < empty.th_original:
 			self.log.debug("Empty image")
-			return False, None, None
+			return None
 		
 		f.image = f.image[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
 		
@@ -48,17 +53,35 @@ class Manager(Worker):
 			f.image = rotate(f.image, self.cfg.preproc.rotate)
 		
 		self._bgsub.push(f.image)
-		self._files.append(f)
+		self._bgsub_files.append(f)
 		if not self._bgsub.full:
-			return False, None, None
-		f = self._files[len(self._files)//2]
-		self._files.pop(0)
+			return None
+		f = self._bgsub_files[len(self._bgsub_files)//2]
+		self._bgsub_files.pop(0)
 		f.image = self._bgsub.meddiv()
 		
 		if empty.th_preproc > 0 and dynrange(f.image) < empty.th_preproc:
 			self.log.debug("Empty image")
-			return False, None, None
-		return True, f
+			return None
+		return f
+	
+	def _update_package(self, f):
+		if not f is None:
+			self._pkg_file.package.files.append(f)
+			self._pkg_file.empty = False
+		if self._frame == self.cfg.meas.burst_len:
+			t = time.time()
+			self._pkg_file.package.save(self.cfg.save.tmp)
+			path = self._pkg_file.path(root=self.cfg.save.dir, ext=self.cfg.save.ext, subdirs=False)
+			os.rename(self.cfg.save.tmp, path)
+			self.log.debug("Saved {} ({:.2f} s)".format(f.name, time.time()-t))
+	
+	def _save_file(self, f):
+		t = time.time()
+		save_image(self.cfg.save.tmp, f.image)
+		path = f.path(root=self.cfg.save.dir, ext=self.cfg.save.ext, subdirs=False)
+		os.rename(self.cfg.save.tmp, path)
+		self.log.debug("Saved {} ({:.2f} s)".format(f.name, time.time()-t))
 	
 	def _update_counters(self):
 		self._time_next += self.cfg.meas.burst_delay
@@ -78,21 +101,25 @@ class Manager(Worker):
 		dt = datetime.utcfromtimestamp(res.time)
 		f = File(self.cfg.sensor.id, dt, self._frame, image=res.image)
 		
+		# Create package
+		if self.cfg.save.is_pkg and self._frame == 1:
+			pkg = Package(
+				fps=self.cfg.meas.burst_fps,
+				len=self.cfg.meas.burst_len,
+			)
+			self._pkg_file = File(self.cfg.sensor.id, dt, 0, empty=True, package=pkg)
+		
 		# Preprocess
 		if self.cfg.preproc.enable:
 			t = time.time()
-			ret, f = self._preproc(f)
+			f = self._preproc(f)
 			self.log.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
-			if not ret:
-				self._update_counters()
-				return True
 		
-		# Save image
-		t = time.time()
-		f.save(self.cfg.save.tmp)
-		path = f.path(root=self.cfg.save.dir, ext=self.cfg.save.type, subdirs=False)
-		os.rename(self.cfg.save.tmp, path)
-		self.log.debug("Saved {} ({:.2f} s)".format(f.name, time.time()-t))
+		# Save or put in the package
+		if self.cfg.save.is_pkg:
+			self._update_package(f)
+		elif not f is None:
+			self._save_file(f)
 		self.log.info("{}".format(f.name))
 		self._update_counters()
 		return self._meas <= self.cfg.meas.n

@@ -3,10 +3,10 @@ class LaserException(Exception):
 
 class Laser:
 	def on(self) -> None:
-		raise NotImplemented()
+		raise NotImplementedError()
 	
 	def off(self) -> None:
-		raise NotImplemented()
+		raise NotImplementedError()
 
 class DummyLaser(Laser):
 	def on(self):
@@ -27,7 +27,7 @@ try:
 except:
 	pass
 
-def createLaser(name, **kwargs):
+def create_laser(name, **kwargs):
 	if not name in lasers:
 		raise LaserException("Laser not installed '{}'".format(name))
 	return lasers[name](**kwargs)

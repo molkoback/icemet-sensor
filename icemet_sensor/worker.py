@@ -29,8 +29,8 @@ class Worker:
 				time.sleep(self.delay)
 			self.cleanup()
 			self.log.debug("Finished")
-		except Exception as err:
-			self.log.critical(str(err))
+		except Exception as e:
+			self.log.critical("{}: {}".format(e.__class__.__name__, e))
 	
 	@classmethod
 	def start(cls, *args, **kwargs):

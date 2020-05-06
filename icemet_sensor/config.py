@@ -1,6 +1,7 @@
 from icemet_sensor import homedir, datadir
 
 from icemet.cfg import Config, ConfigException
+from icemet.pkg import name2ext
 
 import os
 
@@ -18,17 +19,22 @@ class SensorConfig(Config):
 	def __init__(self, fn):
 		try:
 			self.read(fn)
-			self.setDict(self.dict)
+			self.set_dict(self.dict)
 		except Exception as e:
 			raise ConfigException("Couldn't parse config file '{}'\n{}".format(fn, e))
 	
-	def setDict(self, dict):
+	def set_dict(self, dict):
 		self.save = type("SaveParam", (object,), {
 			"dir": os.path.expanduser(os.path.normpath(dict["save"]["dir"])),
 			"type": dict["save"]["type"],
+			"is_pkg": False,
+			"ext": None,
 			"tmp": None
 		})
-		self.save.tmp = os.path.join(self.save.dir, "tmp." + self.save.type)
+		ext = name2ext(self.save.type)
+		self.save.is_pkg = bool(ext)
+		self.save.ext = ext if ext else "."+self.save.type
+		self.save.tmp = os.path.join(self.save.dir, "tmp" + self.save.ext)
 		self.meas = type("MeasureParam", (object,), {
 			"burst_fps": dict["measurement"]["burst_fps"],
 			"burst_delay": 1.0 / dict["measurement"]["burst_fps"],

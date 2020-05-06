@@ -13,19 +13,19 @@ class CameraResult:
 
 class Camera:
 	def start(self) -> None:
-		raise NotImplemented()
+		raise NotImplementedError()
 	
 	def stop(self) -> None:
-		raise NotImplemented()
+		raise NotImplementedError()
 	
 	def read(self) -> CameraResult:
-		raise NotImplemented()
+		raise NotImplementedError()
 	
 	def save_params(self, fn: str) -> None:
-		raise NotImplemented()
+		raise NotImplementedError()
 	
 	def load_params(self, fn: str) -> None:
-		raise NotImplemented()
+		raise NotImplementedError()
 
 class DummyCamera:
 	def __init__(self, size=(640, 480), low=0, high=255):
@@ -62,7 +62,7 @@ try:
 except:
 	pass
 
-def createCamera(name, **kwargs):
+def create_camera(name, **kwargs):
 	if not name in cameras:
 		raise CameraException("Camera not installed '{}'".format(name))
 	return cameras[name](**kwargs)

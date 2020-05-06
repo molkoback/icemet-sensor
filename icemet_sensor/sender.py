@@ -52,7 +52,7 @@ class Sender(Worker):
 			path = os.path.join(self.cfg.save.dir, fn)
 			if os.path.isfile(path) and fn.rsplit(".", 1)[-1] == self.cfg.save.type:
 				try:
-					files.append(File.frompath(fn, open_image=False))
+					files.append(File.frompath(fn))
 				except:
 					pass
 		files.sort()

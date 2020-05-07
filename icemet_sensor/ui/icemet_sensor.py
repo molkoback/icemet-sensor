@@ -24,6 +24,7 @@ def _parse_args():
 	parser.add_argument("--start_next_min", action="store_true", help="start at the next minute")
 	parser.add_argument("--start_next_hour", action="store_true", help="start at the next hour")
 	parser.add_argument("-F", "--offline", action="store_true", help="don't send images over FTP")
+	parser.add_argument("-S", "--send_only", action="store_true", help="only send existing images")
 	#parser.add_argument("-Q", "--quit", action="store_true", help="quit after one measurement (offline)")
 	parser.add_argument("-d", "--debug", action="store_true", help="enable debug messages")
 	parser.add_argument("-V", "--version", action="store_true", help="print version information")
@@ -72,12 +73,14 @@ def main():
 			kwargs["start_time"] = datetime.fromtimestamp(int(time.time()) + 5)
 		
 		# Start worker threads
-		threads = [
-			Sensor.start(**kwargs),
-			Manager.start(**kwargs)
-		]
+		threads = []
+		if not args.send_only:
+			threads.append(Sensor.start(**kwargs))
+			threads.append(Manager.start(**kwargs))
 		if not args.offline and kwargs["cfg"].ftp.enable:
 			threads.append(Sender.start(**kwargs))
+		if not threads:
+			sys.exit(1)
 		
 		# Wait for threads
 		while not kwargs["quit"].get():

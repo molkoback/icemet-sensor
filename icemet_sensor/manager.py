@@ -2,7 +2,7 @@ from icemet_sensor.worker import Worker
 
 from icemet.img import BGSubStack, save_image, dynrange, rotate
 from icemet.file import File
-from icemet.pkg import Package
+from icemet.pkg import create_package
 
 from datetime import datetime
 import os
@@ -67,7 +67,7 @@ class Manager(Worker):
 	
 	def _update_package(self, f):
 		if not f is None:
-			self._pkg_file.package.files.append(f)
+			self._pkg_file.package.add_file(f)
 			self._pkg_file.empty = False
 		if self._frame == self.cfg.meas.burst_len:
 			t = time.time()
@@ -103,9 +103,10 @@ class Manager(Worker):
 		
 		# Create package
 		if self.cfg.save.is_pkg and self._frame == 1:
-			pkg = Package(
+			pkg = create_package(
+				self.cfg.save.type,
 				fps=self.cfg.meas.burst_fps,
-				len=self.cfg.meas.burst_len,
+				len=self.cfg.meas.burst_len
 			)
 			self._pkg_file = File(self.cfg.sensor.id, dt, 0, empty=True, package=pkg)
 		

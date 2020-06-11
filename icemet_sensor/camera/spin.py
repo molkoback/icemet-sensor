@@ -40,11 +40,11 @@ class SpinParameter:
 			PySpin.CEnumerationPtr(self.node).SetIntValue(val)
 
 class SpinCamera(Camera):
-	system = None
-	cam_list = None
-	cam = None
-	
 	def __init__(self, id=0, params=None):
+		self.system = None
+		self.cam_list = None
+		self.cam = None
+		
 		self.system = PySpin.System.GetInstance()
 		self.cam_list = self.system.GetCameras()
 		if id < self.cam_list.GetSize():

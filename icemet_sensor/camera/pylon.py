@@ -5,9 +5,6 @@ from pypylon import pylon
 import time
 
 class PylonCamera(Camera):
-	cam = None
-	converter = None
-	
 	def __init__(self, params=None):
 		try:
 			self.cam = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())

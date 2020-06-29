@@ -17,12 +17,12 @@ class DummyLaser(Laser):
 
 lasers = {"dummy": DummyLaser}
 try:
-	from icemet_sensor.laser.icemet_laser import ICEMETLaser
+	from icemet_sensor.hw.icemet_laser import ICEMETLaser
 	lasers["icemet"] = ICEMETLaser
 except:
 	pass
 try:
-	from icemet_sensor.laser.picolas import PicoLAS
+	from icemet_sensor.hw.picolas import PicoLAS
 	lasers["picolas"] = PicoLAS
 except:
 	pass

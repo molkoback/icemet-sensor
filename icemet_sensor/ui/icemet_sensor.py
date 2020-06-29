@@ -91,7 +91,7 @@ def main():
 			time.sleep(0.1)
 	
 	except Exception as e:
-		log.critical(log.critical("{}: {}".format(e.__class__.__name__, e)))
+		log.critical("{}: {}".format(e.__class__.__name__, e))
 		sys.exit(1)
 	
 	except KeyboardInterrupt:

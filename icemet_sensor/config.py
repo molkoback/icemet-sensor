@@ -35,8 +35,8 @@ class SensorConfig(Config):
 		self.sensor = type("SensorParam", (object,), {
 			"id": int(dict["sensor"]["id"], 16)
 		})
-		self.camera = self._cfg_obj(dict["camera"], "CameraParam")
-		self.laser = self._cfg_obj(dict["laser"], "LaserParam")
+		self.camera = self._creatable(dict["camera"], "CameraParam")
+		self.laser = self._creatable(dict["laser"], "LaserParam")
 		self.ftp = type("FTPParam", (object,), {
 			"enable": dict["ftp"]["enable"],
 			"host": dict["ftp"]["host"],
@@ -61,7 +61,7 @@ class SensorConfig(Config):
 			"bgsub_stack_len": int(dict["preproc"]["bgsub_stack_len"])
 		})
 	
-	def _cfg_obj(self, obj, clsname):
+	def _creatable(self, obj, clsname):
 		k = next(iter(obj))
 		return type(clsname, (object,), {
 			"name": k,

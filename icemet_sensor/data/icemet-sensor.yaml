@@ -20,12 +20,10 @@ id: "01",
 }
 
 # Cameras: dummy{}, spin{id}, pylon{}
-camera: {"spin": {
-"id": 0
-}}
+camera: {"dummy": {}}
 
-# Lasers: dummy{}, icemet{}, myrio{}, picolas{port}
-laser: {"icemet": {}}
+# Lasers: dummy{}, icemet{}, myrio{saku_laser_path}, picolas{port}
+laser: {"dummy": {}}
 
 # FTP settings
 ftp: {

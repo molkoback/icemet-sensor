@@ -1,1 +1,2 @@
+aioftp>=0.16
 icemet-python>=1.4.0

@@ -1,5 +1,6 @@
 import numpy as np
 
+import asyncio
 import random
 import time
 
@@ -12,13 +13,13 @@ class CameraResult:
 		self.time = kwargs.get("time", None)
 
 class Camera:
-	def start(self) -> None:
+	async def start(self) -> None:
 		raise NotImplementedError()
 	
-	def stop(self) -> None:
+	async def stop(self) -> None:
 		raise NotImplementedError()
 	
-	def read(self) -> CameraResult:
+	async def read(self) -> CameraResult:
 		raise NotImplementedError()
 	
 	def save_params(self, fn: str) -> None:
@@ -33,14 +34,14 @@ class DummyCamera:
 		self.low = low
 		self.high = high
 	
-	def start(self):
+	async def start(self):
 		pass
 	
-	def stop(self):
+	async def stop(self):
 		pass
 	
-	def read(self):
-		time.sleep(random.randint(1, 50)/1000)
+	async def read(self):
+		await asyncio.sleep(random.randint(1, 50)/1000)
 		return CameraResult(
 			image=np.random.randint(
 				self.low, high=self.high,

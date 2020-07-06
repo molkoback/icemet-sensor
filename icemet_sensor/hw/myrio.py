@@ -2,10 +2,10 @@ from icemet_sensor.laser import Laser
 
 import psutil
 
+import asyncio
 import logging
 import os
 import subprocess as sp
-import time
 
 class MyRIO(Laser):
 	def __init__(self, saku_laser_path="C:/SAKU Laser"):
@@ -15,15 +15,15 @@ class MyRIO(Laser):
 	def __del__(self):
 		self._kill()
 	
-	def on(self):
+	async def on(self):
 		self._pid = sp.Popen(self._cmd).pid
 		logging.info("Waiting for SAKU Laser")
-		time.sleep(10)
+		await asyncio.sleep(10)
 	
 	def _kill(self):
 		if not self._pid is None:
 			psutil.Process(self._pid).kill()
 			self._pid = None
 	
-	def off(self):
+	async def off(self):
 		self._kill()

@@ -2,6 +2,7 @@ from icemet_sensor.laser import Laser, LaserException
 
 import serial
 
+import asyncio
 import time
 
 _default_on_params = [
@@ -27,8 +28,6 @@ class PicoLAS(Laser):
 		self.on_params = kwargs.get("on_params", _default_on_params)
 		self.off_params = kwargs.get("off_params", _default_off_params)
 		
-		self._delay = 0.010
-		
 		self._ser = serial.Serial()
 		self._ser.port = kwargs.get("port", "COM3")
 		self._ser.baudrate = 115200
@@ -37,37 +36,41 @@ class PicoLAS(Laser):
 		self._ser.stopbits = serial.STOPBITS_ONE
 		self._ser.timeout = 1.0
 	
-	def _open(self):
+	async def _open(self):
 		try:
 			self._ser.open()
-			ret, _ = self._write("gvoltage")
+			ret, _ = await self._write("gvoltage")
 			if not ret:
-				self._ser.close()
 				raise Exception()
 		except:
+			self._ser.close()
 			raise LaserException("Couldn't connect to PicoLAS at '{}'".format(self._ser.port))
 	
-	def _close(self):
-		self._ser.close()
-	
-	def _write(self, cmd):
-		data = ("%s\r" % cmd).encode("utf-8")
-		self._ser.write(data)
+	async def _write(self, cmd):
+		data = ("{}\r".format(cmd)).encode("utf-8")
+		await self._ser.write(data)
+		
+		t = time.time()
+		while not self._ser.in_waiting:
+			if time.time() - t > self._ser.timeout:
+				raise LaserException("PicoLAS did not respond")
+			await asyncio.sleep(0.010)
+		
 		resp = self._ser.read_until(b"\r\n\n")
 		lines = resp.decode("utf-8").rstrip().split("\r\n")
 		return lines[-1] == "0", lines[:1]
 	
-	def _write_params(self, params):
-		self._open()
+	async def _write_params(self, params):
+		await self._open()
 		for param in params:
-			ret, _ = self._write(param)
+			ret, _ = await self._write(param)
 			if not ret:
 				raise LaserException("Failed PicoLAS parameter '{}'".format(param))
-			time.sleep(self._delay)
-		self._close()
+			await asyncio.sleep(0.010)
+		self._ser.close()
 	
-	def on(self):
-		self._write_params(self.on_params)
+	async def on(self):
+		await self._write_params(self.on_params)
 	
-	def off(self):
-		self._write_params(self.off_params)
+	async def off(self):
+		await self._write_params(self.off_params)

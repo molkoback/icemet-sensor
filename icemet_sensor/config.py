@@ -31,11 +31,9 @@ class SensorConfig(Config):
 			"burst_delay": 1.0 / float(dict["measurement"]["burst_fps"]),
 			"burst_len": int(dict["measurement"]["burst_len"]),
 			"wait": float(dict["measurement"]["wait"]),
-			"n": float("inf")
 		})
 		self.sensor = type("SensorParam", (object,), {
-			"id": int(dict["sensor"]["id"], 16),
-			"restart": int(dict["sensor"]["restart"])
+			"id": int(dict["sensor"]["id"], 16)
 		})
 		self.camera = self._cfg_obj(dict["camera"], "CameraParam")
 		self.laser = self._cfg_obj(dict["laser"], "LaserParam")

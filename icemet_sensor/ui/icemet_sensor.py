@@ -1,11 +1,13 @@
 from icemet_sensor import version, homedir
-from icemet_sensor.manager import Manager
+from icemet_sensor.config import create_config_file, SensorConfig
+from icemet_sensor.measure import Measure
 from icemet_sensor.sender import Sender
 from icemet_sensor.sensor import Sensor
-from icemet_sensor.config import create_config_file, SensorConfig
-from icemet_sensor.data import Stack, Atomic
+
+import aioftp
 
 import argparse
+import asyncio
 from datetime import datetime
 import logging
 import os
@@ -18,6 +20,7 @@ Copyright (C) 2019-2020 Eero Molkoselkä <eero.molkoselka@gmail.com>
 """.format(version=version)
 
 _default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
+_ret = 0
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")
@@ -27,23 +30,35 @@ def _parse_args():
 	parser.add_argument("--start_next_hour", action="store_true", help="start at the next hour")
 	parser.add_argument("-F", "--offline", action="store_true", help="don't send images over FTP")
 	parser.add_argument("-S", "--send_only", action="store_true", help="only send existing images")
-	#parser.add_argument("-Q", "--quit", action="store_true", help="quit after one measurement (offline)")
 	parser.add_argument("-d", "--debug", action="store_true", help="enable debug messages")
 	parser.add_argument("-V", "--version", action="store_true", help="print version information")
 	return parser.parse_args()
 
 def _init_logging(level):
-	if level == logging.DEBUG:
-		fmt = "[%(asctime)s]<%(name)s>(%(levelname)s) %(message)s"
-	else:
-		fmt = "[%(asctime)s] %(message)s"
 	root = logging.getLogger()
 	root.setLevel(level)
 	ch = logging.StreamHandler(sys.stdout)
 	ch.setLevel(level)
+	if level == logging.DEBUG:
+		fmt = "[%(asctime)s]<%(module)s:%(lineno)d>(%(levelname)s) %(message)s"
+		aioftp.client.logger.setLevel(logging.DEBUG)
+	else:
+		fmt = "[%(asctime)s](%(levelname)s) %(message)s"
+		aioftp.client.logger.setLevel(logging.ERROR)
 	formatter = logging.Formatter(fmt, datefmt="%H:%M:%S")
 	ch.setFormatter(formatter)
 	root.addHandler(ch)
+
+def _error(e):
+	global _ret
+	logging.critical("{}: {}".format(e.__class__.__name__, e))
+	_ret = 1
+
+def _handler(loop, ctx):
+	e = ctx["exception"]
+	if not isinstance(e, KeyboardInterrupt):
+		_error(e)
+	loop.stop()
 
 def main():
 	args = _parse_args()
@@ -52,50 +67,41 @@ def main():
 		sys.exit(0)
 	
 	_init_logging(logging.DEBUG if args.debug else logging.INFO)
-	log = logging.getLogger("MAIN")
 	
-	kwargs = {}
 	try:
 		if args.config == _default_config_file and not os.path.exists(args.config):
 			create_config_file(args.config)
 			logging.info("Config file created '{}'".format(args.config))
-		
-		kwargs["quit"] = Atomic(False)
-		kwargs["stack"] = Stack(1)
-		kwargs["cfg"] = SensorConfig(args.config)
+		cfg = SensorConfig(args.config)
 		
 		# Set the start time
+		now = int(time.time())
 		if args.start:
-			kwargs["start_time"] = datetime.strptime(args.start, "%Y-%m-%d %H:%M:%S")
+			start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S").timestamp()
 		elif args.start_next_min:
-			kwargs["start_time"] = datetime.fromtimestamp(int(time.time()) // 60 * 60 + 60)
+			start_time = now // 60 * 60 + 60
 		elif args.start_next_hour:
-			kwargs["start_time"] = datetime.fromtimestamp(int(time.time()) // 3600 * 3600 + 3600)
+			start_time = now // 3600 * 3600 + 3600
 		else:
-			kwargs["start_time"] = datetime.fromtimestamp(int(time.time()) + 5)
+			start_time = now // 10 * 10 + 10
 		
-		# Start worker threads
-		threads = []
+		# Start tasks
+		logging.info("ICEMET-sensor {:02X}".format(cfg.sensor.id))
+		tasks = []
 		if not args.send_only:
-			threads.append(Sensor.start(**kwargs))
-			threads.append(Manager.start(**kwargs))
-		if not args.offline and kwargs["cfg"].ftp.enable:
-			threads.append(Sender.start(**kwargs))
-		if not threads:
+			tasks.append(Measure(cfg, start_time, Sensor(cfg)).run())
+		if not args.offline and cfg.ftp.enable:
+			tasks.append(Sender(cfg).run())
+		if not tasks:
 			sys.exit(1)
-		
-		# Wait for threads
-		while not kwargs["quit"].get():
-			for thread in threads:
-				if not thread.is_alive():
-					kwargs["quit"].set(True)
-					sys.exit(1)
-			time.sleep(0.1)
+		loop = asyncio.get_event_loop()
+		loop.set_exception_handler(_handler)
+		for task in tasks:
+			loop.create_task(task)
+		loop.run_forever()
 	
 	except Exception as e:
-		log.critical("{}: {}".format(e.__class__.__name__, e))
-		sys.exit(1)
-	
+		_error(e)
 	except KeyboardInterrupt:
-		kwargs["quit"].set(True)
-		log.info("Exiting")
+		logging.info("Exiting")
+	sys.exit(_ret)

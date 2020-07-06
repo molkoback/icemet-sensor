@@ -17,7 +17,6 @@ wait: 0
 # Sensor settings
 sensor: {
 id: "01",
-restart: -1
 }
 
 # Cameras: dummy{}, spin{id}, pylon{}

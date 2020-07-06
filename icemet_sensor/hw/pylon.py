@@ -18,15 +18,15 @@ class PylonCamera(Camera):
 		self.converter.OutputPixelFormat = pylon.PixelType_Mono8
 		self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 	
-	def start(self):
+	async def start(self):
 		self.cam.Open()
 		self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 	
-	def stop(self):
+	async def stop(self):
 		self.cam.StopGrabbing()
 		self.cam.Close()
 	
-	def read(self):
+	async def read(self):
 		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
 		if res.GrabSucceeded():
 			image = self.converter.Convert(res).GetArray()

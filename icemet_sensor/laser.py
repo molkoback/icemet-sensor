@@ -2,17 +2,17 @@ class LaserException(Exception):
 	pass
 
 class Laser:
-	def on(self) -> None:
+	async def on(self) -> None:
 		raise NotImplementedError()
 	
-	def off(self) -> None:
+	async def off(self) -> None:
 		raise NotImplementedError()
 
 class DummyLaser(Laser):
-	def on(self):
+	async def on(self):
 		pass
 	
-	def off(self):
+	async def off(self):
 		pass
 
 lasers = {"dummy": DummyLaser}

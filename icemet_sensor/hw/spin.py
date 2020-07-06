@@ -60,15 +60,15 @@ class SpinCamera(Camera):
 		self._start_time = None
 		self._start_stamp = None
 	
-	def start(self):
+	async def start(self):
 		self.cam.BeginAcquisition()
 		self._start_stamp = self.cam.GetNextImage().GetTimeStamp()
 		self._start_time = time.time()
 	
-	def stop(self):
+	async def stop(self):
 		self.cam.EndAcquisition()
 	
-	def read(self):
+	async def read(self):
 		res = self.cam.GetNextImage()
 		image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
 		stamp = (res.GetTimeStamp() - self._start_stamp) / 10**9 + self._start_time

@@ -4,8 +4,8 @@ class ICEMETLaser(Laser):
 	def __init__(self):
 		pass
 	
-	def on(self):
+	async def on(self):
 		pass
 	
-	def off(self):
+	async def off(self):
 		pass 

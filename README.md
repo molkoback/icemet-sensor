@@ -11,8 +11,3 @@ Install Python package.
 ```bash
 $ python setup.py install
 ```
-
-Copy the config file `icemet-server.yaml`.
-```bash
-$ cp etc/icemet-server.yaml ~/.icemet-server.yaml
-```

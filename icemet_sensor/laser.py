@@ -22,6 +22,11 @@ try:
 except:
 	pass
 try:
+	from icemet_sensor.hw.myrio import MyRIO
+	lasers["myrio"] = MyRIO
+except:
+	pass
+try:
 	from icemet_sensor.hw.picolas import PicoLAS
 	lasers["picolas"] = PicoLAS
 except:

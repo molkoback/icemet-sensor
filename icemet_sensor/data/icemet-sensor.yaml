@@ -25,7 +25,7 @@ camera: {"spin": {
 "id": 0
 }}
 
-# Lasers: dummy{}, picolas{port}, icemet{}
+# Lasers: dummy{}, icemet{}, myrio{}, picolas{port}
 laser: {"icemet": {}}
 
 # FTP settings

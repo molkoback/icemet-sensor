@@ -4,26 +4,17 @@ from icemet.cfg import Config, ConfigException
 from icemet.pkg import name2ext
 
 import os
+import shutil
 
-default_file = os.path.join(homedir, "icemet-sensor.yaml")
+default_file = os.path.join(datadir, "icemet-sensor.yaml")
 
-def create_default_file():
-	fn = os.path.join(datadir, "icemet-sensor.yaml")
-	with open(fn) as fp:
-		txt = fp.read()
-	os.makedirs(homedir, exist_ok=True)
-	with open(default_file, "w") as fp:
-		fp.write(txt)
+def create_config_file(dst):
+	os.makedirs(os.path.split(dst)[0], exist_ok=True)
+	shutil.copy(default_file, dst)
 
 class SensorConfig(Config):
-	def __init__(self, fn):
-		try:
-			self.read(fn)
-			self.set_dict(self.dict)
-		except Exception as e:
-			raise ConfigException("Couldn't parse config file '{}'\n{}".format(fn, e))
-	
 	def set_dict(self, dict):
+		super().set_dict(dict)
 		self.save = type("SaveParam", (object,), {
 			"dir": os.path.expanduser(os.path.normpath(dict["save"]["dir"])),
 			"type": dict["save"]["type"],
@@ -36,15 +27,15 @@ class SensorConfig(Config):
 		self.save.ext = ext if ext else "."+self.save.type
 		self.save.tmp = os.path.join(self.save.dir, "tmp" + self.save.ext)
 		self.meas = type("MeasureParam", (object,), {
-			"burst_fps": dict["measurement"]["burst_fps"],
-			"burst_delay": 1.0 / dict["measurement"]["burst_fps"],
-			"burst_len": dict["measurement"]["burst_len"],
-			"wait": dict["measurement"]["wait"],
+			"burst_fps": float(dict["measurement"]["burst_fps"]),
+			"burst_delay": 1.0 / float(dict["measurement"]["burst_fps"]),
+			"burst_len": int(dict["measurement"]["burst_len"]),
+			"wait": float(dict["measurement"]["wait"]),
 			"n": float("inf")
 		})
 		self.sensor = type("SensorParam", (object,), {
-			"id": dict["sensor"]["id"],
-			"restart": dict["sensor"]["restart"]
+			"id": int(dict["sensor"]["id"], 16),
+			"restart": int(dict["sensor"]["restart"])
 		})
 		self.camera = self._cfg_obj(dict["camera"], "CameraParam")
 		self.laser = self._cfg_obj(dict["laser"], "LaserParam")
@@ -59,17 +50,17 @@ class SensorConfig(Config):
 		self.preproc = type("PreprocParam", (object,), {
 			"enable": dict["preproc"]["enable"],
 			"crop": type("CropParam", (object,), {
-				"x": dict["preproc"]["crop"]["x"],
-				"y": dict["preproc"]["crop"]["y"],
-				"w": dict["preproc"]["crop"]["w"],
-				"h": dict["preproc"]["crop"]["h"]
+				"x": int(dict["preproc"]["crop"]["x"]),
+				"y": int(dict["preproc"]["crop"]["y"]),
+				"w": int(dict["preproc"]["crop"]["w"]),
+				"h": int(dict["preproc"]["crop"]["h"])
 			}),
-			"rotate": dict["preproc"]["rotate"],
+			"rotate": float(dict["preproc"]["rotate"]),
 			"empty": type("EmptyParam", (object,), {
-				"th_original": dict["preproc"]["empty"]["th_original"],
-				"th_preproc": dict["preproc"]["empty"]["th_preproc"]
+				"th_original": int(dict["preproc"]["empty"]["th_original"]),
+				"th_preproc": int(dict["preproc"]["empty"]["th_preproc"])
 			}),
-			"bgsub_stack_len": dict["preproc"]["bgsub_stack_len"]
+			"bgsub_stack_len": int(dict["preproc"]["bgsub_stack_len"])
 		})
 	
 	def _cfg_obj(self, obj, clsname):

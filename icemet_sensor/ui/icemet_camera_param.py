@@ -1,11 +1,15 @@
+from icemet_sensor import homedir
 from icemet_sensor.camera import create_camera
-from icemet_sensor.config import default_file, SensorConfig
+from icemet_sensor.config import SensorConfig
 
 import argparse
+import os
+
+_default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor camera parameter utility")
-	parser.add_argument("cfg", nargs="?", default=default_file, help="config file", metavar="str")
+	parser.add_argument("cfg", nargs="?", default=_default_config_file, help="config file", metavar="str")
 	parser.add_argument("-i", "--input", type=str, help="input file", metavar="str")
 	parser.add_argument("-o", "--output", type=str, help="output file", metavar="str")
 	return parser.parse_args()

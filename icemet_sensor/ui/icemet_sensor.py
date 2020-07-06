@@ -1,8 +1,8 @@
-from icemet_sensor import version
+from icemet_sensor import version, homedir
 from icemet_sensor.manager import Manager
 from icemet_sensor.sender import Sender
 from icemet_sensor.sensor import Sensor
-from icemet_sensor.config import default_file, create_default_file, SensorConfig
+from icemet_sensor.config import create_config_file, SensorConfig
 from icemet_sensor.data import Stack, Atomic
 
 import argparse
@@ -17,9 +17,11 @@ _version_str = """ICEMET-sensor {version}
 Copyright (C) 2019-2020 Eero Molkoselkä <eero.molkoselka@gmail.com>
 """.format(version=version)
 
+_default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
+
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")
-	parser.add_argument("-c", "--config", type=str, help="config file (default: {})".format(default_file), metavar="str", default=default_file)
+	parser.add_argument("-c", "--config", type=str, help="config file (default: {})".format(_default_config_file), metavar="str", default=_default_config_file)
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_next_min", action="store_true", help="start at the next minute")
 	parser.add_argument("--start_next_hour", action="store_true", help="start at the next hour")
@@ -54,8 +56,8 @@ def main():
 	
 	kwargs = {}
 	try:
-		if args.config == default_file and not os.path.exists(args.config):
-			create_default_file()
+		if args.config == _default_config_file and not os.path.exists(args.config):
+			create_config_file(args.config)
 			logging.info("Config file created '{}'".format(args.config))
 		
 		kwargs["quit"] = Atomic(False)

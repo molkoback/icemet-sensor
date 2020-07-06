@@ -16,7 +16,7 @@ wait: 0
 
 # Sensor settings
 sensor: {
-id: 1,
+id: "01",
 restart: -1
 }
 

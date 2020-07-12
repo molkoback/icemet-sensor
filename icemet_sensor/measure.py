@@ -1,5 +1,5 @@
-from icemet.img import BGSubStack, save_image, dynrange, rotate
-from icemet.file import File, FileStatus
+from icemet.img import Image, BGSubStack
+from icemet.file import FileStatus
 from icemet.pkg import create_package
 
 import asyncio
@@ -16,55 +16,59 @@ class Measure:
 		self._time_next = start_time
 		self._frame = 1
 		self._meas = 1
-		self._pkg_file = None
+		self._pkg = None
 		if self.cfg.preproc.enable:
 			size = (self.cfg.preproc.crop.h, self.cfg.preproc.crop.w)
 			self._bgsub = BGSubStack(self.cfg.preproc.bgsub_stack_len, size)
-			self._bgsub_files = []
 	
-	def _preproc(self, f):
+	def _preproc(self, img):
 		empty = self.cfg.preproc.empty
 		crop = self.cfg.preproc.crop
 		
-		if empty.th_original > 0 and dynrange(f.image) < empty.th_original:
-			logging.debug("Empty image")
-			return None
+		if empty.th_original > 0 and img.dynrange() < empty.th_original:
+			img.status = FileStatus.EMPTY
+			return img
 		
-		f.image = f.image[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
+		img.mat = img.mat[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
 		
 		if self.cfg.preproc.rotate != 0:
-			f.image = rotate(f.image, self.cfg.preproc.rotate)
+			img.mat = img.rotate(self.cfg.preproc.rotate)
 		
-		self._bgsub.push(f.image)
-		self._bgsub_files.append(f)
+		self._bgsub.push(img)
 		if not self._bgsub.full:
 			return None
-		f = self._bgsub_files[len(self._bgsub_files)//2]
-		self._bgsub_files.pop(0)
-		f.image = self._bgsub.meddiv()
+		img = self._bgsub.meddiv()
 		
-		if empty.th_preproc > 0 and dynrange(f.image) < empty.th_preproc:
+		if empty.th_preproc > 0 and img.dynrange() < empty.th_preproc:
+			img.status = FileStatus.EMPTY
+		return img
+	
+	async def _update_package(self, img):
+		self._pkg.len += 1
+		
+		if img.status == FileStatus.EMPTY:
 			logging.debug("Empty image")
-			return None
-		return f
-	
-	async def _update_package(self, f):
-		if not f is None:
-			self._pkg_file.package.add_file(f)
-			self._pkg_file.status = FileStatus.NOTEMPTY
-		if self._frame == self.cfg.meas.burst_len:
+		else:
+			self._pkg.add_img(img)
+			self._pkg.status = FileStatus.NOTEMPTY
+		
+		if img.frame == self.cfg.meas.burst_len:
 			t = time.time()
-			self._pkg_file.package.save(self.cfg.save.tmp)
-			path = self._pkg_file.path(root=self.cfg.save.dir, ext=self.cfg.save.ext, subdirs=False)
+			self._pkg.save(self.cfg.save.tmp)
+			path = self._pkg.path(root=self.cfg.save.dir, ext=self.cfg.save.ext, subdirs=False)
 			os.rename(self.cfg.save.tmp, path)
-			logging.debug("Saved {} ({:.2f} s)".format(f.name, time.time()-t))
+			logging.debug("Saved {} ({:.2f} s)".format(self._pkg.name(), time.time()-t))
+			self._pkg = None
 	
-	async def _save_file(self, f):
+	async def _save_img(self, img):
+		if img.status == FileStatus.EMPTY:
+			logging.debug("Empty image")
+			return
 		t = time.time()
-		save_image(self.cfg.save.tmp, f.image)
-		path = f.path(root=self.cfg.save.dir, ext=self.cfg.save.ext, subdirs=False)
+		img.save(self.cfg.save.tmp)
+		path = img.path(root=self.cfg.save.dir, ext=self.cfg.save.ext, subdirs=False)
 		os.rename(self.cfg.save.tmp, path)
-		logging.debug("Saved {} ({:.2f} s)".format(f.name, time.time()-t))
+		logging.debug("Saved {} ({:.2f} s)".format(img.name(), time.time()-t))
 	
 	def _update_counters(self):
 		self._time_next += self.cfg.meas.burst_delay
@@ -80,31 +84,42 @@ class Measure:
 		if res.time < self._time_next:
 			return
 		
-		# Create file
+		# Create image
 		dt = datetime.fromtimestamp(res.time, timezone.utc)
-		f = File(self.cfg.sensor.id, dt, self._frame, status=FileStatus.NOTEMPTY, image=res.image)
+		img = Image(
+			sensor_id=self.cfg.sensor.id,
+			datetime=dt,
+			frame=self._frame,
+			status=FileStatus.NOTEMPTY,
+			mat=res.image
+		)
 		
 		# Create package
-		if self.cfg.save.is_pkg and self._frame == 1:
-			pkg = create_package(
+		if self.cfg.save.is_pkg and self._pkg is None:
+			self._pkg = create_package(
 				self.cfg.save.type,
-				fps=self.cfg.meas.burst_fps,
-				len=self.cfg.meas.burst_len
+				sensor_id=self.cfg.sensor.id,
+				datetime=dt,
+				frame=0,
+				status=FileStatus.EMPTY,
+				len=0,
+				fps=self.cfg.meas.burst_fps
 			)
-			self._pkg_file = File(self.cfg.sensor.id, dt, 0, status=FileStatus.EMPTY, package=pkg)
 		
 		# Preprocess
 		if self.cfg.preproc.enable:
 			t = time.time()
-			f = self._preproc(f)
+			img = self._preproc(img)
 			logging.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
 		
 		# Save or put in the package
-		if self.cfg.save.is_pkg:
-			self.loop.create_task(self._update_package(f))
-		elif not f is None:
-			self.loop.create_task(self._save_file(f))
-		logging.info("{}".format(f.name))
+		if img is not None:
+			if self.cfg.save.is_pkg:
+				task = self._update_package(img)
+			else:
+				task = self._save_img(img)
+			self.loop.create_task(task)
+			logging.info("{}".format(img.name()))
 		self._update_counters()
 	
 	async def run(self):

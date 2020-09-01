@@ -39,8 +39,7 @@ class PicoLAS(Laser):
 	async def _open(self):
 		try:
 			self._ser.open()
-			ret, _ = await self._write("gvoltage")
-			if not ret:
+			if not await self._write("gvoltage"):
 				raise Exception()
 		except:
 			self._ser.close()
@@ -48,7 +47,7 @@ class PicoLAS(Laser):
 	
 	async def _write(self, cmd):
 		data = ("{}\r".format(cmd)).encode("utf-8")
-		await self._ser.write(data)
+		self._ser.write(data)
 		
 		t = time.time()
 		while not self._ser.in_waiting:
@@ -58,13 +57,12 @@ class PicoLAS(Laser):
 		
 		resp = self._ser.read_until(b"\r\n\n")
 		lines = resp.decode("utf-8").rstrip().split("\r\n")
-		return lines[-1] == "0", lines[:1]
+		return lines[-1] == "0"
 	
 	async def _write_params(self, params):
 		await self._open()
 		for param in params:
-			ret, _ = await self._write(param)
-			if not ret:
+			if not await self._write(param):
 				raise LaserException("Failed PicoLAS parameter '{}'".format(param))
 			await asyncio.sleep(0.010)
 		self._ser.close()

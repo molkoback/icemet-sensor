@@ -3,6 +3,7 @@ from icemet_sensor.config import create_config_file, SensorConfig
 from icemet_sensor.measure import Measure
 from icemet_sensor.sender import Sender
 from icemet_sensor.sensor import Sensor
+from icemet_sensor.util import collect_garbage
 
 import aioftp
 
@@ -89,6 +90,7 @@ def main():
 		logging.info("ICEMET-sensor {:02X}".format(cfg.sensor.id))
 		tasks = []
 		if not args.send_only:
+			tasks.append(collect_garbage(5))
 			tasks.append(Measure(cfg, start_time, Sensor(cfg)).run())
 		if not args.offline and cfg.ftp.enable:
 			tasks.append(Sender(cfg).run())

@@ -7,12 +7,18 @@ class Laser:
 	
 	async def off(self) -> None:
 		raise NotImplementedError()
+	
+	def close(self) -> None:
+		raise NotImplementedError()
 
 class DummyLaser(Laser):
 	async def on(self):
 		pass
 	
 	async def off(self):
+		pass
+	
+	def close(self):
 		pass
 
 lasers = {"dummy": DummyLaser}

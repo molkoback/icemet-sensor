@@ -26,3 +26,4 @@ def main():
 		print("Parameters loaded from '{}'".format(args.input))
 	if not args.input and not args.output:
 		print("Nothing to do")
+	cam.close()

@@ -10,6 +10,7 @@ class PylonCamera(Camera):
 			self.cam = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
 		except:
 			raise CameraException("PylonCamera not found")
+		self.cam.Open()
 		
 		if params:
 			self.load_params(params)
@@ -19,12 +20,10 @@ class PylonCamera(Camera):
 		self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 	
 	async def start(self):
-		self.cam.Open()
 		self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 	
 	async def stop(self):
 		self.cam.StopGrabbing()
-		self.cam.Close()
 	
 	async def read(self):
 		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
@@ -34,11 +33,10 @@ class PylonCamera(Camera):
 			return CameraResult(image=image, time=stamp)
 	
 	def save_params(self, fn):
-		self.cam.Open()
 		pylon.FeaturePersistence.Save(fn, self.cam.GetNodeMap())
-		self.cam.Close()
 	
 	def load_params(self, fn):
-		self.cam.Open()
 		pylon.FeaturePersistence.Load(fn, self.cam.GetNodeMap(), True)
+	
+	def close(self):
 		self.cam.Close()

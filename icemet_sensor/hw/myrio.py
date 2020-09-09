@@ -12,9 +12,6 @@ class MyRIO(Laser):
 		self._pid = None
 		self._cmd = [os.path.join(saku_laser_path, "SAKU Laser.exe")]
 	
-	def __del__(self):
-		self._kill()
-	
 	async def on(self):
 		self._pid = sp.Popen(self._cmd).pid
 		logging.info("Waiting for SAKU Laser")
@@ -26,4 +23,7 @@ class MyRIO(Laser):
 			self._pid = None
 	
 	async def off(self):
+		self._kill()
+	
+	def close(self):
 		self._kill()

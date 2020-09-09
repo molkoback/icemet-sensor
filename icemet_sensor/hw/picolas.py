@@ -28,6 +28,7 @@ class PicoLAS(Laser):
 		self.on_params = kwargs.get("on_params", _default_on_params)
 		self.off_params = kwargs.get("off_params", _default_off_params)
 		
+		self._ser = None
 		self._ser = serial.Serial()
 		self._ser.port = kwargs.get("port", "COM3")
 		self._ser.baudrate = 115200
@@ -72,3 +73,7 @@ class PicoLAS(Laser):
 	
 	async def off(self):
 		await self._write_params(self.off_params)
+	
+	def close(self):
+		if not self._ser is None:
+			self._ser.close()

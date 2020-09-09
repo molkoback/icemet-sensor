@@ -8,6 +8,8 @@ import time
 class Sensor:
 	def __init__(self, cfg):
 		self.cfg = cfg
+		self._lsr = None
+		self._cam = None
 		self._lsr = create_laser(self.cfg.laser.name, **self.cfg.laser.kwargs)
 		self._cam = create_camera(self.cfg.camera.name, **self.cfg.camera.kwargs)
 	
@@ -26,3 +28,9 @@ class Sensor:
 		res = await self._cam.read()
 		logging.debug("Image read ({:.2f} s)".format(time.time()-t))
 		return res
+	
+	def close(self):
+		if not self._lsr is None:
+			self._lsr.close()
+		if not self._cam is None:
+			self._cam.close()

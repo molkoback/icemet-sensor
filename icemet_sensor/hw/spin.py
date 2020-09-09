@@ -3,6 +3,8 @@ from icemet_sensor.camera import CameraResult, Camera, CameraException
 import numpy as np
 import PySpin
 
+import asyncio
+import json
 import time
 
 class SpinParameter:
@@ -44,10 +46,9 @@ class SpinCamera(Camera):
 		self.system = None
 		self.cam_list = None
 		self.cam = None
-		
 		self.system = PySpin.System.GetInstance()
 		self.cam_list = self.system.GetCameras()
-		if id < self.cam_list.GetSize():
+		if id >= 0 and id < self.cam_list.GetSize():
 			self.cam = self.cam_list.GetByIndex(id)
 		else:
 			raise CameraException("SpinCamera not found '{}'".format(id))
@@ -57,6 +58,7 @@ class SpinCamera(Camera):
 			self.load_params(params)
 		self.cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
 		
+		self.loop = asyncio.get_event_loop()
 		self._start_time = None
 		self._start_stamp = None
 	
@@ -68,11 +70,14 @@ class SpinCamera(Camera):
 	async def stop(self):
 		self.cam.EndAcquisition()
 	
-	async def read(self):
+	def _read(self):
 		res = self.cam.GetNextImage()
 		image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
 		stamp = (res.GetTimeStamp() - self._start_stamp) / 10**9 + self._start_time
 		return CameraResult(image=image, time=stamp)
+	
+	async def read(self):
+		return await self.loop.run_in_executor(None, self._read)
 	
 	def _traverse(self, node, params):
 		category = PySpin.CCategoryPtr(node)
@@ -108,7 +113,7 @@ class SpinCamera(Camera):
 					param.set(val)
 					break
 	
-	def __del__(self):
+	def close(self):
 		if not self.cam is None:
 			if self.cam.IsStreaming():
 				self.cam.EndAcquisition()

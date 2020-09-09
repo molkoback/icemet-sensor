@@ -27,6 +27,9 @@ class Camera:
 	
 	def load_params(self, fn: str) -> None:
 		raise NotImplementedError()
+	
+	def close(self) -> None:
+		raise NotImplementedError()
 
 class DummyCamera:
 	def __init__(self, size=(640, 480), low=0, high=255):
@@ -50,6 +53,9 @@ class DummyCamera:
 			),
 			time=time.time()
 		)
+	
+	def close(self):
+		pass
 
 cameras = {"dummy": DummyCamera}
 try:

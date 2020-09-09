@@ -8,4 +8,7 @@ class ICEMETLaser(Laser):
 		pass
 	
 	async def off(self):
-		pass 
+		pass
+	
+	def close(self):
+		pass

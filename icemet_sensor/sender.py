@@ -22,14 +22,14 @@ def _find_files(dir):
 	return files
 
 class Sender:
-	def __init__(self, cfg):
-		self.cfg = cfg
-		self.loop = asyncio.get_event_loop()
+	def __init__(self, ctx):
+		self.ctx = ctx
 		self._client = aioftp.Client()
+		self._pool = concurrent.futures.ProcessPoolExecutor()
 	
 	async def _connect(self):
-		await self._client.connect(self.cfg.ftp.host, port=self.cfg.ftp.port)
-		await self._client.login(self.cfg.ftp.user, self.cfg.ftp.passwd)
+		await self._client.connect(self.ctx.cfg.ftp.host, port=self.ctx.cfg.ftp.port)
+		await self._client.login(self.ctx.cfg.ftp.user, self.ctx.cfg.ftp.passwd)
 		logging.debug("Connected")
 	
 	async def _reconnect(self, n):
@@ -40,35 +40,37 @@ class Sender:
 			except:
 				await asyncio.sleep(60)
 	
-	async def _find_files(self):
-		with concurrent.futures.ProcessPoolExecutor() as pool:
-			files = await self.loop.run_in_executor(pool, _find_files, self.cfg.save.dir)
-		return files
-	
 	async def _send(self, fn_in, fn_out):
 		async with aioftp.ClientSession(
-			self.cfg.ftp.host, self.cfg.ftp.port,
-			self.cfg.ftp.user, self.cfg.ftp.passwd
+			self.ctx.cfg.ftp.host, self.ctx.cfg.ftp.port,
+			self.ctx.cfg.ftp.user, self.ctx.cfg.ftp.passwd
 		) as client:
 			await client.upload(fn_in, fn_out, write_into=True)
 	
 	async def _cycle(self):
-		files = await self._find_files()
+		files = await self.ctx.loop.run_in_executor(self._pool, _find_files, self.ctx.cfg.save.dir)
 		for f in files:
+			if self.ctx.quit.is_set():
+				break
+			
 			t = time.time()
-			fn_in = f.path(root=self.cfg.save.dir, ext=self.cfg.save.type, subdirs=False)
-			fn_out = f.path(root=self.cfg.ftp.path, ext=self.cfg.save.type, subdirs=False)
+			fn_in = f.path(root=self.ctx.cfg.save.dir, ext=self.ctx.cfg.save.type, subdirs=False)
+			fn_out = f.path(root=self.ctx.cfg.ftp.path, ext=self.ctx.cfg.save.type, subdirs=False)
 			try:
 				await self._send(fn_in, fn_out)
 			except:
-				self._reconnect(3)
+				await self._reconnect(3)
 				break
-			os.remove(fn_in)
-			logging.debug("Sent {} ({:.2f} s)".format(f.name, time.time()-t))
+			
+			await self.ctx.loop.run_in_executor(None, os.remove, fn_in)
+			logging.debug("Sent {} ({:.2f} s)".format(f.name(), time.time()-t))
 	
 	async def run(self):
-		logging.info("FTP server {}:{}".format(self.cfg.ftp.host, self.cfg.ftp.port))
-		await self._connect()
-		while True:
-			await self._cycle()
-			await asyncio.sleep(1.0)
+		logging.info("FTP server {}:{}".format(self.ctx.cfg.ftp.host, self.ctx.cfg.ftp.port))
+		try:
+			await self._connect()
+			while not self.ctx.quit.is_set():
+				await self._cycle()
+				await asyncio.sleep(1.0)
+		except KeyboardInterrupt:
+			self.ctx.quit.set()

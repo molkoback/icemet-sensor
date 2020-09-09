@@ -18,7 +18,8 @@ setup(
 		"myrio": ["psutil>=5.7.2"],
 		"picolas": ["pyserial>=3.4"],
 		"pylon": ["pypylon>=1.5.1"],
-		"spin": ["spinnaker-python>=1.20.0.14"]
+		"spin": ["spinnaker-python>=1.20.0.14"],
+		"xyt01": ["pyserial>=3.4"]
 	},
 	
 	package_data={"icemet_sensor": ["data/*"]},

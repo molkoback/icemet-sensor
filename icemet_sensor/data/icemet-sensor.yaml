@@ -25,6 +25,9 @@ camera: {"dummy": {}}
 # Lasers: dummy{}, icemet{}, myrio{saku_laser_path}, picolas{port}
 laser: {"dummy": {}}
 
+# TempRelays: dummy{}, xyt01{port,offset,thresh,hyst}
+temp_relay: {}
+
 # FTP settings
 ftp: {
 enable: false,

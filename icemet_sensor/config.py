@@ -37,6 +37,9 @@ class SensorConfig(Config):
 		})
 		self.camera = self._creatable(dict["camera"], "CameraParam")
 		self.laser = self._creatable(dict["laser"], "LaserParam")
+		self.temp_relay = None
+		if dict["temp_relay"]:
+			self.temp_relay = self._creatable(dict["temp_relay"], "TempRelayParam")
 		self.ftp = type("FTPParam", (object,), {
 			"enable": dict["ftp"]["enable"],
 			"host": dict["ftp"]["host"],

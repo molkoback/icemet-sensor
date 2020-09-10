@@ -4,6 +4,8 @@ import numpy as np
 import PySpin
 
 import asyncio
+import collections
+import concurrent.futures
 import json
 import time
 
@@ -58,7 +60,8 @@ class SpinCamera(Camera):
 			self.load_params(params)
 		self.cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_Continuous)
 		
-		self.loop = asyncio.get_event_loop()
+		self._loop = asyncio.get_event_loop()
+		self._pool = concurrent.futures.ThreadPoolExecutor()
 		self._start_time = None
 		self._start_stamp = None
 	
@@ -77,7 +80,7 @@ class SpinCamera(Camera):
 		return CameraResult(image=image, time=stamp)
 	
 	async def read(self):
-		return await self.loop.run_in_executor(None, self._read)
+		return await self._loop.run_in_executor(self._pool, self._read)
 	
 	def _traverse(self, node, params):
 		category = PySpin.CCategoryPtr(node)
@@ -89,29 +92,30 @@ class SpinCamera(Camera):
 			else:
 				param = SpinParameter(child)
 				if not param.val() is None and PySpin.IsWritable(child):
-					params.append(param)
+					params[param.name] = param
 	
 	def _get_params(self):
-		params = []
+		params = {}
 		self._traverse(self.cam.GetNodeMap().GetNode("Root"), params)
 		return params
 	
 	def save_params(self, fn):
 		obj = {}
-		for param in self._get_params():
-			obj[param.name] = param.val()
+		for name, param in self._get_params().items():
+			obj[name] = param.val()
 		with open(fn, "w") as fp:
-			json.dump(obj, fp, sort_keys=True, indent=4)
+			json.dump(obj, fp, indent=4)
 	
 	def load_params(self, fn):
 		with open(fn) as fp:
-			obj = json.load(fp)
-		params = self._get_params()
+			obj = json.load(fp, object_pairs_hook=collections.OrderedDict)
+		
 		for name, val in obj.items():
-			for param in params:
-				if name == param.name:
-					param.set(val)
-					break
+			params = self._get_params()
+			try:
+				params[name].set(val)
+			except:
+				raise CameraException("Failed parameter '{}'".format(name))
 	
 	def close(self):
 		if not self.cam is None:

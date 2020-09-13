@@ -40,13 +40,6 @@ class Sender:
 			except:
 				await asyncio.sleep(60)
 	
-	async def _send(self, fn_in, fn_out):
-		async with aioftp.ClientSession(
-			self.ctx.cfg.ftp.host, self.ctx.cfg.ftp.port,
-			self.ctx.cfg.ftp.user, self.ctx.cfg.ftp.passwd
-		) as client:
-			await client.upload(fn_in, fn_out, write_into=True)
-	
 	async def _cycle(self):
 		files = await self.ctx.loop.run_in_executor(self._pool, _find_files, self.ctx.cfg.save.dir)
 		for f in files:
@@ -54,16 +47,18 @@ class Sender:
 				break
 			
 			t = time.time()
-			fn_in = f.path(root=self.ctx.cfg.save.dir, ext=self.ctx.cfg.save.type, subdirs=False)
-			fn_out = f.path(root=self.ctx.cfg.ftp.path, ext=self.ctx.cfg.save.type, subdirs=False)
+			fn_in = f.path(root=self.ctx.cfg.save.dir, ext=self.ctx.cfg.save.ext, subdirs=False)
+			fn_out = f.path(root=self.ctx.cfg.ftp.path, ext=self.ctx.cfg.save.ext, subdirs=False)
 			try:
-				await self._send(fn_in, fn_out)
+				await self._client.upload(fn_in, fn_out, write_into=True)
 			except:
 				await self._reconnect(3)
 				break
 			
 			await self.ctx.loop.run_in_executor(None, os.remove, fn_in)
 			logging.debug("Sent {} ({:.2f} s)".format(f.name(), time.time()-t))
+		if not files:
+			await asyncio.sleep(1.0)
 	
 	async def run(self):
 		logging.info("FTP server {}:{}".format(self.ctx.cfg.ftp.host, self.ctx.cfg.ftp.port))
@@ -71,6 +66,5 @@ class Sender:
 			await self._connect()
 			while not self.ctx.quit.is_set():
 				await self._cycle()
-				await asyncio.sleep(1.0)
 		except KeyboardInterrupt:
 			self.ctx.quit.set()

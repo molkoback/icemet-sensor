@@ -62,24 +62,13 @@ def main():
 		logging.info("Config file created '{}'".format(ctx.args.config))
 	ctx.cfg = SensorConfig(ctx.args.config)
 	
-	# Set the start time
-	now = int(time.time())
-	if ctx.args.start:
-		start_time = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S").timestamp()
-	elif ctx.args.start_next_min:
-		start_time = now // 60 * 60 + 60
-	elif ctx.args.start_next_hour:
-		start_time = now // 3600 * 3600 + 3600
-	else:
-		start_time = now // 10 * 10 + 10
-	
 	logging.info("ICEMET-sensor {:02X}".format(ctx.cfg.sensor.id))
 	
 	# Create tasks
 	tasks = []
 	if not ctx.args.send_only:
 		tasks.append(ctx.loop.create_task(collect_garbage(ctx, 2.0)))
-		tasks.append(ctx.loop.create_task(Measure(ctx, start_time).run()))
+		tasks.append(ctx.loop.create_task(Measure(ctx).run()))
 	if not ctx.args.offline and ctx.cfg.ftp.enable:
 		tasks.append(ctx.loop.create_task(Sender(ctx).run()))
 	if not tasks:

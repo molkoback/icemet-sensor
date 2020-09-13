@@ -11,10 +11,10 @@ import os
 import time
 
 class Measure:
-	def __init__(self, ctx, start_time):
+	def __init__(self, ctx):
 		self.ctx = ctx
 		self.sensor = Sensor(ctx.cfg)
-		self._time_next = start_time
+		self._time_next = 0
 		self._frame = 1
 		self._meas = 1
 		self._pkg = None
@@ -130,14 +130,26 @@ class Measure:
 			os.makedirs(self.ctx.cfg.save.dir)
 		logging.info("Save path '{}'".format(self.ctx.cfg.save.dir))
 		
+		# Start sensor
+		await self.sensor.on()
+		
+		# Set measurement start time
+		now = int(time.time())
+		if self.ctx.args.start:
+			self._time_next = datetime.strptime(self._time_next, "%Y-%m-%d %H:%M:%S").timestamp()
+		elif self.ctx.args.start_next_min:
+			self._time_next = now // 60 * 60 + 60
+		elif self.ctx.args.start_next_hour:
+			self._time_next = now // 3600 * 3600 + 3600
+		else:
+			self._time_next = now // 10 * 10 + 10
+		dt = datetime.fromtimestamp(self._time_next)
+		logging.info("Start time {}".format(dt.strftime("%Y-%m-%d %H:%M:%S")))
+		
 		# Run measurements
 		try:
-			await self.sensor.on()
-			dt = datetime.fromtimestamp(self._time_next)
-			logging.info("Start time {}".format(dt.strftime("%Y-%m-%d %H:%M:%S")))
 			while not self.ctx.quit.is_set():
 				await self._cycle()
-				await asyncio.sleep(0.001)
 		except KeyboardInterrupt:
 			self.ctx.quit.set()
 		finally:

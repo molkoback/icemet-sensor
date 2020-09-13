@@ -2,6 +2,8 @@ from icemet_sensor.camera import CameraResult, Camera, CameraException
 
 from pypylon import pylon
 
+import asyncio
+import concurrent.futures
 import time
 
 class PylonCamera(Camera):
@@ -18,6 +20,8 @@ class PylonCamera(Camera):
 		self.converter = pylon.ImageFormatConverter()
 		self.converter.OutputPixelFormat = pylon.PixelType_Mono8
 		self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
+		self._loop = asyncio.get_event_loop()
+		self._pool = concurrent.futures.ThreadPoolExecutor()
 	
 	async def start(self):
 		self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -25,12 +29,14 @@ class PylonCamera(Camera):
 	async def stop(self):
 		self.cam.StopGrabbing()
 	
-	async def read(self):
+	def read(self):
 		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
-		if res.GrabSucceeded():
-			image = self.converter.Convert(res).GetArray()
-			stamp = time.time()
-			return CameraResult(image=image, time=stamp)
+		image = self.converter.Convert(res).GetArray()
+		stamp = time.time()
+		return CameraResult(image=image, time=stamp)
+	
+	async def read(self):
+		return await self._loop.run_in_executor(self._pool, self._read)
 	
 	def save_params(self, fn):
 		pylon.FeaturePersistence.Save(fn, self.cam.GetNodeMap())

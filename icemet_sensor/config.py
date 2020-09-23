@@ -46,8 +46,10 @@ class SensorConfig(Config):
 			"port": int(dict["ftp"]["port"]),
 			"user": dict["ftp"]["user"],
 			"passwd": dict["ftp"]["passwd"],
-			"path": os.path.normpath(dict["ftp"]["path"])
+			"dir": dict["ftp"]["dir"],
+			"tmp": None
 		})
+		self.ftp.tmp = self.ftp.dir + "/tmp" + self.save.ext
 		self.preproc = type("PreprocParam", (object,), {
 			"enable": dict["preproc"]["enable"],
 			"crop": type("CropParam", (object,), {

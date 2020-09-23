@@ -48,9 +48,10 @@ class Sender:
 			
 			t = time.time()
 			fn_in = f.path(root=self.ctx.cfg.save.dir, ext=self.ctx.cfg.save.ext, subdirs=False)
-			fn_out = f.path(root=self.ctx.cfg.ftp.path, ext=self.ctx.cfg.save.ext, subdirs=False)
+			fn_out = self.ctx.cfg.ftp.dir + "/" + f.path(root="", ext=self.ctx.cfg.save.ext, subdirs=False)
 			try:
-				await self._client.upload(fn_in, fn_out, write_into=True)
+				await self._client.upload(fn_in, self.ctx.cfg.ftp.tmp, write_into=True)
+				await self._client.rename(self.ctx.cfg.ftp.tmp, fn_out)
 			except:
 				await self._reconnect(3)
 				break

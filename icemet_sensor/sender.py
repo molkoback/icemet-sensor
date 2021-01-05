@@ -61,11 +61,19 @@ class Sender:
 		if not files:
 			await asyncio.sleep(1.0)
 	
-	async def run(self):
+	async def _run(self):
 		logging.info("FTP server {}:{}".format(self.ctx.cfg.ftp.host, self.ctx.cfg.ftp.port))
+		await self._connect()
+		while not self.ctx.quit.is_set():
+			await self._cycle()
+	
+	async def run(self):
 		try:
-			await self._connect()
-			while not self.ctx.quit.is_set():
-				await self._cycle()
+			await self._run()
 		except KeyboardInterrupt:
 			self.ctx.quit.set()
+		except Exception as e:
+			logging.error(str(e))
+			self.ctx.quit.set()
+		finally:
+			self._client.close()

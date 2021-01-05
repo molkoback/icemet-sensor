@@ -29,7 +29,7 @@ class PylonCamera(Camera):
 	async def stop(self):
 		self.cam.StopGrabbing()
 	
-	def read(self):
+	def _read(self):
 		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
 		image = self.converter.Convert(res).GetArray()
 		stamp = time.time()

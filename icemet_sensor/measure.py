@@ -123,7 +123,7 @@ class Measure:
 			logging.info("{}".format(img.name()))
 		self._update_counters()
 	
-	async def run(self):
+	async def _run(self):
 		# Create path
 		if not os.path.exists(self.ctx.cfg.save.dir):
 			logging.info("Creating path '{}'".format(self.ctx.cfg.save.dir))
@@ -147,10 +147,16 @@ class Measure:
 		logging.info("Start time {}".format(dt.strftime("%Y-%m-%d %H:%M:%S")))
 		
 		# Run measurements
+		while not self.ctx.quit.is_set():
+			await self._cycle()
+	
+	async def run(self):
 		try:
-			while not self.ctx.quit.is_set():
-				await self._cycle()
+			await self._run()
 		except KeyboardInterrupt:
+			self.ctx.quit.set()
+		except Exception as e:
+			logging.error(str(e))
 			self.ctx.quit.set()
 		finally:
 			await self.sensor.off()

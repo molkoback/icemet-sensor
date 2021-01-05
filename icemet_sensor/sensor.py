@@ -16,17 +16,22 @@ class Sensor:
 		self._temp_relay = None
 		if not self.cfg.temp_relay is None:
 			self._temp_relay = create_temp_relay(self.cfg.temp_relay.name, **self.cfg.temp_relay.kwargs)
+		self._on = False
 	
 	async def on(self):
-		await self._lsr.on()
-		await self._cam.start()
-		if not self._temp_relay is None:
-			await self._temp_relay.enable()
+		if not self._on:
+			await self._lsr.on()
+			await self._cam.start()
+			if not self._temp_relay is None:
+				await self._temp_relay.enable()
+			self._on = True
 		logging.debug("Sensor ON")
 	
 	async def off(self):
-		await self._cam.stop()
-		await self._lsr.off()
+		if self._on:
+			await self._cam.stop()
+			await self._lsr.off()
+			self._on = False
 		logging.debug("Sensor OFF")
 	
 	async def read(self):

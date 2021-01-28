@@ -4,11 +4,16 @@ from icemet.img import Image, BGSubStack
 from icemet.file import FileStatus
 from icemet.pkg import create_package
 
+import numpy as np
+
 import asyncio
 from datetime import datetime, timezone
 import logging
 import os
 import time
+
+class MeasureException(Exception):
+	pass
 
 class Measure:
 	def __init__(self, ctx):
@@ -22,13 +27,14 @@ class Measure:
 			size = (self.ctx.cfg.preproc.crop.h, self.ctx.cfg.preproc.crop.w)
 			self._bgsub = BGSubStack(self.ctx.cfg.preproc.bgsub_stack_len, size)
 	
+	def _is_black(self, mat):
+		return self.ctx.cfg.meas.black_th > 0 and np.mean(mat) < self.ctx.cfg.meas.black_th
+	
+	def _is_empty(self, img):
+		return self.ctx.cfg.preproc.empty_th > 0 and img.dynrange() < self.ctx.cfg.preproc.empty_th
+	
 	def _preproc(self, img):
-		empty = self.ctx.cfg.preproc.empty
 		crop = self.ctx.cfg.preproc.crop
-		
-		if empty.th_original > 0 and img.dynrange() < empty.th_original:
-			img.status = FileStatus.EMPTY
-			return img
 		
 		img.mat = img.mat[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
 		
@@ -40,16 +46,14 @@ class Measure:
 			return None
 		img = self._bgsub.meddiv()
 		
-		if empty.th_preproc > 0 and img.dynrange() < empty.th_preproc:
+		if self._is_empty(img):
 			img.status = FileStatus.EMPTY
 		return img
 	
 	def _update_package(self, img):
 		self._pkg.len += 1
 		
-		if img.status == FileStatus.EMPTY:
-			logging.debug("Empty image")
-		else:
+		if img.status == FileStatus.NOTEMPTY:
 			self._pkg.add_img(img)
 			self._pkg.status = FileStatus.NOTEMPTY
 		
@@ -63,7 +67,6 @@ class Measure:
 	
 	def _save_img(self, img):
 		if img.status == FileStatus.EMPTY:
-			logging.debug("Empty image")
 			return
 		t = time.time()
 		img.save(self.ctx.cfg.save.tmp)
@@ -84,6 +87,10 @@ class Measure:
 		res = await self.sensor.read()
 		if res.time < self._time_next:
 			return
+		
+		# Check for black image
+		if self._is_black(res.image):
+			raise MeasureException("Sensor failed (black image)")
 		
 		# Create image
 		dt = datetime.fromtimestamp(res.time, timezone.utc)

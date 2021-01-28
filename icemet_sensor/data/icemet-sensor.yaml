@@ -11,12 +11,13 @@ type: "png"
 measurement: {
 burst_fps: 1,
 burst_len: 60,
-wait: 0
+wait: 0,
+black_th: 0
 }
 
 # Sensor settings
 sensor: {
-id: "01",
+id: "00",
 }
 
 # Cameras: dummy{}, spin{id}, pylon{}
@@ -41,8 +42,8 @@ dir: "."
 # Preprocessing
 preproc: {
 enable: false,
-crop: {x: 200, y: 0, w: 2048, h: 2048},
+crop: {x: 0, y: 0, w: 2048, h: 2048},
 rotate: 0,
-empty: {th_original: 40, th_preproc: 10},
+empty_th: 0,
 bgsub_stack_len: 7
 }

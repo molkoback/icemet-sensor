@@ -31,6 +31,7 @@ class SensorConfig(Config):
 			"burst_delay": 1.0 / float(dict["measurement"]["burst_fps"]),
 			"burst_len": int(dict["measurement"]["burst_len"]),
 			"wait": float(dict["measurement"]["wait"]),
+			"black_th": float(dict["measurement"]["black_th"])
 		})
 		self.sensor = type("SensorParam", (object,), {
 			"id": int(dict["sensor"]["id"], 16)
@@ -59,10 +60,7 @@ class SensorConfig(Config):
 				"h": int(dict["preproc"]["crop"]["h"])
 			}),
 			"rotate": float(dict["preproc"]["rotate"]),
-			"empty": type("EmptyParam", (object,), {
-				"th_original": int(dict["preproc"]["empty"]["th_original"]),
-				"th_preproc": int(dict["preproc"]["empty"]["th_preproc"])
-			}),
+			"empty_th": int(dict["preproc"]["empty_th"]),
 			"bgsub_stack_len": int(dict["preproc"]["bgsub_stack_len"])
 		})
 	

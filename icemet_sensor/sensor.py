@@ -6,6 +6,9 @@ import logging
 import multiprocessing as mp
 import time
 
+class SensorException(Exception):
+	pass
+
 class Sensor:
 	def __init__(self, cfg):
 		self.cfg = cfg

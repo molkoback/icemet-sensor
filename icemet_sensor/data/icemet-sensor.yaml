@@ -20,10 +20,10 @@ sensor: {
 id: "00",
 }
 
-# Cameras: dummy{}, spin{id}, pylon{}
+# Cameras: dummy{size,low,high}, spin{id,params,hwclock}, pylon{params}
 camera: {"dummy": {}}
 
-# Lasers: dummy{}, icemet{}, myrio{saku_laser_path}, picolas{port}
+# Lasers: dummy{}, icemet{}, myrio{saku_laser_path}, picolas{port,on_params,off_params}
 laser: {"dummy": {}}
 
 # TempRelays: dummy{}, xyt01{port,offset,thresh,hyst}

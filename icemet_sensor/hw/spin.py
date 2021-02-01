@@ -44,7 +44,7 @@ class SpinParameter:
 			PySpin.CEnumerationPtr(self.node).SetIntValue(val)
 
 class SpinCamera(Camera):
-	def __init__(self, id=0, params=None):
+	def __init__(self, id=0, params=None, hwclock=True):
 		self.system = None
 		self.cam_list = None
 		self.cam = None
@@ -62,6 +62,8 @@ class SpinCamera(Camera):
 		
 		self._loop = asyncio.get_event_loop()
 		self._pool = concurrent.futures.ThreadPoolExecutor()
+		
+		self.hwclock = hwclock
 		self._start_time = None
 		self._start_stamp = None
 	
@@ -73,10 +75,15 @@ class SpinCamera(Camera):
 	async def stop(self):
 		self.cam.EndAcquisition()
 	
+	def _timestamp(self, res):
+		if not self.hwclock:
+			return time.time()
+		return (res.GetTimeStamp() - self._start_stamp) / 10**9 + self._start_time
+	
 	def _read(self):
 		res = self.cam.GetNextImage()
+		stamp = self._timestamp(res)
 		image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
-		stamp = (res.GetTimeStamp() - self._start_stamp) / 10**9 + self._start_time
 		return CameraResult(image=image, time=stamp)
 	
 	async def read(self):

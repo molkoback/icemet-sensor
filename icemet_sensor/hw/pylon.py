@@ -31,8 +31,8 @@ class PylonCamera(Camera):
 	
 	def _read(self):
 		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
-		image = self.converter.Convert(res).GetArray()
 		stamp = time.time()
+		image = self.converter.Convert(res).GetArray()
 		return CameraResult(image=image, time=stamp)
 	
 	async def read(self):

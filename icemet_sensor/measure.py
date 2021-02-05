@@ -24,8 +24,7 @@ class Measure:
 		self._meas = 1
 		self._pkg = None
 		if self.ctx.cfg.preproc.enable:
-			size = (self.ctx.cfg.preproc.crop.h, self.ctx.cfg.preproc.crop.w)
-			self._bgsub = BGSubStack(self.ctx.cfg.preproc.bgsub_stack_len, size)
+			self._bgsub = BGSubStack(self.ctx.cfg.preproc.bgsub_stack_len)
 	
 	def _is_black(self, mat):
 		return self.ctx.cfg.meas.black_th > 0 and np.mean(mat) < self.ctx.cfg.meas.black_th
@@ -41,8 +40,7 @@ class Measure:
 		if self.ctx.cfg.preproc.rotate != 0:
 			img.mat = img.rotate(self.ctx.cfg.preproc.rotate)
 		
-		self._bgsub.push(img)
-		if not self._bgsub.full:
+		if not self._bgsub.push(img):
 			return None
 		img = self._bgsub.meddiv()
 		

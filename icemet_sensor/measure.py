@@ -142,12 +142,10 @@ class Measure:
 		now = int(time.time())
 		if self.ctx.args.start:
 			self._time_next = datetime.strptime(self._time_next, "%Y-%m-%d %H:%M:%S").timestamp()
-		elif self.ctx.args.start_next_min:
-			self._time_next = now // 60 * 60 + 60
-		elif self.ctx.args.start_next_hour:
-			self._time_next = now // 3600 * 3600 + 3600
+		elif self.ctx.args.start_now:
+			self._time_next = now
 		else:
-			self._time_next = now // 10 * 10 + 10
+			self._time_next = now // 60 * 60 + 60
 		dt = datetime.fromtimestamp(self._time_next)
 		logging.info("Start time {}".format(dt.strftime("%Y-%m-%d %H:%M:%S")))
 		

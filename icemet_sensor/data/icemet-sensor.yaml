@@ -18,6 +18,7 @@ black_th: 0
 # Sensor settings
 sensor: {
 id: "00",
+name: "ICEMET"
 }
 
 # Cameras: dummy{size,low,high}, spin{id,params,hwclock}, pylon{params}
@@ -31,12 +32,18 @@ temp_relay: {}
 
 # FTP settings
 ftp: {
-enable: false,
 host: "localhost",
 port: 21,
 user: "icemet",
 passwd: "",
 dir: "."
+}
+
+# Status settings
+status: {
+url: "http://localhost/api/status/",
+user: "icemet",
+passwd: ""
 }
 
 # Preprocessing

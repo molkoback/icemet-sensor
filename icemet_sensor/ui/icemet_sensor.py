@@ -2,6 +2,7 @@ from icemet_sensor import Context, version, homedir
 from icemet_sensor.config import create_config_file, SensorConfig
 from icemet_sensor.measure import Measure
 from icemet_sensor.sender import Sender
+from icemet_sensor.status import Status
 from icemet_sensor.util import collect_garbage
 
 import aioftp
@@ -26,8 +27,9 @@ def _parse_args():
 	parser.add_argument("-c", "--config", type=str, help="config file (default: {})".format(_default_config_file), metavar="str", default=_default_config_file)
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_now", action="store_true", help="start at the next minute")
-	parser.add_argument("-F", "--offline", action="store_true", help="don't send images over FTP")
-	parser.add_argument("-S", "--send_only", action="store_true", help="only send existing images")
+	parser.add_argument("--no_images", action="store_true", help="don't take images")
+	parser.add_argument("--no_send", action="store_true", help="don't send images over FTP")
+	parser.add_argument("--no_status", action="store_true", help="don't send status messages")
 	parser.add_argument("-d", "--debug", action="store_true", help="enable debug messages")
 	parser.add_argument("-V", "--version", action="store_true", help="print version information")
 	return parser.parse_args()
@@ -61,15 +63,17 @@ def main():
 		logging.info("Config file created '{}'".format(ctx.args.config))
 	ctx.cfg = SensorConfig(ctx.args.config)
 	
-	logging.info("ICEMET-sensor {:02X}".format(ctx.cfg.sensor.id))
+	logging.info("{} ({:02X})".format(ctx.cfg.sensor.name, ctx.cfg.sensor.id))
 	
 	# Create tasks
 	tasks = []
-	if not ctx.args.send_only:
+	if not ctx.args.no_images:
 		tasks.append(ctx.loop.create_task(collect_garbage(ctx, 2.0)))
 		tasks.append(ctx.loop.create_task(Measure(ctx).run()))
-	if not ctx.args.offline and ctx.cfg.ftp.enable:
+	if not ctx.args.no_send:
 		tasks.append(ctx.loop.create_task(Sender(ctx).run()))
+	if not ctx.args.no_status:
+		tasks.append(ctx.loop.create_task(Status(ctx).run()))
 	if not tasks:
 		sys.exit(1)
 	

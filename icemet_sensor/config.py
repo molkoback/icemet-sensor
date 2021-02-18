@@ -34,7 +34,8 @@ class SensorConfig(Config):
 			"black_th": float(dict["measurement"]["black_th"])
 		})
 		self.sensor = type("SensorParam", (object,), {
-			"id": int(dict["sensor"]["id"], 16)
+			"id": int(dict["sensor"]["id"], 16),
+			"name": dict["sensor"]["name"]
 		})
 		self.camera = self._creatable(dict["camera"], "CameraParam")
 		self.laser = self._creatable(dict["laser"], "LaserParam")
@@ -42,7 +43,6 @@ class SensorConfig(Config):
 		if dict["temp_relay"]:
 			self.temp_relay = self._creatable(dict["temp_relay"], "TempRelayParam")
 		self.ftp = type("FTPParam", (object,), {
-			"enable": dict["ftp"]["enable"],
 			"host": dict["ftp"]["host"],
 			"port": int(dict["ftp"]["port"]),
 			"user": dict["ftp"]["user"],
@@ -51,6 +51,11 @@ class SensorConfig(Config):
 			"tmp": None
 		})
 		self.ftp.tmp = self.ftp.dir + "/tmp" + self.save.ext
+		self.status = type("StatusParam", (object,), {
+			"url": dict["status"]["url"],
+			"user": dict["status"]["user"],
+			"passwd": dict["status"]["passwd"],
+		})
 		self.preproc = type("PreprocParam", (object,), {
 			"enable": dict["preproc"]["enable"],
 			"crop": type("CropParam", (object,), {

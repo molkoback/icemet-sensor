@@ -30,12 +30,13 @@ class SensorConfig(Config):
 			"burst_fps": float(dict["measurement"]["burst_fps"]),
 			"burst_delay": 1.0 / float(dict["measurement"]["burst_fps"]),
 			"burst_len": int(dict["measurement"]["burst_len"]),
-			"wait": float(dict["measurement"]["wait"]),
-			"black_th": float(dict["measurement"]["black_th"])
+			"wait": float(dict["measurement"]["wait"])
 		})
 		self.sensor = type("SensorParam", (object,), {
 			"id": int(dict["sensor"]["id"], 16),
-			"name": dict["sensor"]["name"]
+			"name": dict["sensor"]["name"],
+			"timeout": float(dict["sensor"]["timeout"]),
+			"black_th": float(dict["sensor"]["black_th"])
 		})
 		self.camera = self._creatable(dict["camera"], "CameraParam")
 		self.laser = self._creatable(dict["laser"], "LaserParam")

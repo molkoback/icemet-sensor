@@ -2,6 +2,8 @@ from icemet_sensor.camera import create_camera
 from icemet_sensor.laser import create_laser
 from icemet_sensor.temp_relay import create_temp_relay
 
+import numpy as np
+
 import logging
 import multiprocessing as mp
 import time
@@ -21,6 +23,10 @@ class Sensor:
 			self._temp_relay = create_temp_relay(self.cfg.temp_relay.name, **self.cfg.temp_relay.kwargs)
 		self._on = False
 	
+	def _is_black(self, image):
+		th = self.cfg.sensor.black_th
+		return th > 0 and np.mean(image) < th
+	
 	async def on(self):
 		if not self._on:
 			await self._lsr.on()
@@ -39,9 +45,12 @@ class Sensor:
 	
 	async def read(self):
 		t = time.time()
-		res = await self._cam.read()
-		logging.debug("Image read ({:.2f} s)".format(time.time()-t))
-		return res
+		while time.time() - t < self.cfg.sensor.timeout:
+			res = await self._cam.read()
+			if not self._is_black(res.image):
+				logging.debug("Image read ({:.2f} s)".format(time.time()-t))
+				return res
+		raise SensorException("Sensor failed (black image)")
 	
 	async def temp(self):
 		if self._temp_relay is None:

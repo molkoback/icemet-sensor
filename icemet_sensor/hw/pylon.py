@@ -1,10 +1,10 @@
 from icemet_sensor.camera import CameraResult, Camera, CameraException
+from icemet_sensor.util import utcnow
 
 from pypylon import pylon
 
 import asyncio
 import concurrent.futures
-import time
 
 class PylonCamera(Camera):
 	def __init__(self, params=None):
@@ -31,9 +31,9 @@ class PylonCamera(Camera):
 	
 	def _read(self):
 		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
-		stamp = time.time()
+		datetime = utcnow()
 		image = self.converter.Convert(res).GetArray()
-		return CameraResult(image=image, time=stamp)
+		return CameraResult(image=image, datetime=datetime)
 	
 	async def read(self):
 		return await self._loop.run_in_executor(self._pool, self._read)

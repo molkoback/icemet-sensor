@@ -4,8 +4,6 @@ from icemet.img import Image, BGSubStack
 from icemet.file import FileStatus
 from icemet.pkg import create_package
 
-import numpy as np
-
 import asyncio
 from datetime import datetime, timezone
 import logging
@@ -23,27 +21,40 @@ class Measure:
 		self._frame = 1
 		self._meas = 1
 		self._pkg = None
-		if self.ctx.cfg.preproc.enable:
-			self._bgsub = BGSubStack(self.ctx.cfg.preproc.bgsub_stack_len)
-	
-	def _is_black(self, mat):
-		return self.ctx.cfg.meas.black_th > 0 and np.mean(mat) < self.ctx.cfg.meas.black_th
+		self._bgsub = None
+		len = self.ctx.cfg.preproc.bgsub_stack_len
+		if len > 0:
+			self._bgsub = BGSubStack(len)
 	
 	def _is_empty(self, img):
-		return self.ctx.cfg.preproc.empty_th > 0 and img.dynrange() < self.ctx.cfg.preproc.empty_th
+		th = self.ctx.cfg.preproc.empty_th
+		return th > 0 and img.dynrange() < th
+	
+	def _utc_next(self):
+		return datetime.fromtimestamp(self._time_next, timezone.utc)
 	
 	def _preproc(self, img):
+		# Crop
+		shape_h, shape_w = img.mat.shape
 		crop = self.ctx.cfg.preproc.crop
+		if crop.w != shape_w or crop.h != shape_h:
+			img.mat = img.mat[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
 		
-		img.mat = img.mat[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
+		# Rotate
+		rot = self.ctx.cfg.preproc.rotate
+		if rot != 0:
+			img.mat = img.rotate(rot)
 		
-		if self.ctx.cfg.preproc.rotate != 0:
-			img.mat = img.rotate(self.ctx.cfg.preproc.rotate)
+		# Background subtraction
+		if not self._bgsub is None:
+			if not self._bgsub.push(img):
+				return None
+			img = self._bgsub.current()
+			if img.datetime < self._utc_next():
+				return None
+			img = self._bgsub.meddiv()
 		
-		if not self._bgsub.push(img):
-			return None
-		img = self._bgsub.meddiv()
-		
+		# Empty check
 		if self._is_empty(img):
 			img.status = FileStatus.EMPTY
 		return img
@@ -63,7 +74,7 @@ class Measure:
 			logging.debug("Saved {} ({:.2f} s)".format(self._pkg.name(), time.time()-t))
 			self._pkg = None
 	
-	def _save_img(self, img):
+	def _save_image(self, img):
 		if img.status == FileStatus.EMPTY:
 			return
 		t = time.time()
@@ -83,49 +94,45 @@ class Measure:
 	async def _cycle(self):
 		# Read the newest image
 		res = await self.sensor.read()
-		if res.time < self._time_next:
-			return
-		
-		# Check for black image
-		if self._is_black(res.image):
-			raise MeasureException("Sensor failed (black image)")
-		
-		# Create image
-		dt = datetime.fromtimestamp(res.time, timezone.utc)
 		img = Image(
 			sensor_id=self.ctx.cfg.sensor.id,
-			datetime=dt,
-			frame=self._frame,
+			datetime=res.datetime,
+			frame=0,
 			status=FileStatus.NOTEMPTY,
 			mat=res.image
 		)
-		
-		# Create package
-		if self.ctx.cfg.save.is_pkg and self._pkg is None:
-			self._pkg = create_package(
-				self.ctx.cfg.save.type,
-				sensor_id=self.ctx.cfg.sensor.id,
-				datetime=dt,
-				frame=0,
-				status=FileStatus.EMPTY,
-				len=0,
-				fps=self.ctx.cfg.meas.burst_fps
-			)
 		
 		# Preprocess
 		if self.ctx.cfg.preproc.enable:
 			t = time.time()
 			img = self._preproc(img)
 			logging.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
+			if img is None:
+				return
+			img.frame = self._frame
+		else:
+			if img.datetime < self._utc_next():
+				return
+			img.frame = self._frame
+		
+		# Create package
+		if self.ctx.cfg.save.is_pkg and self._pkg is None:
+			self._pkg = create_package(
+				self.ctx.cfg.save.type,
+				sensor_id=self.ctx.cfg.sensor.id,
+				datetime=img.datetime,
+				status=FileStatus.EMPTY,
+				len=0,
+				fps=self.ctx.cfg.meas.burst_fps
+			)
 		
 		# Save or put in the package
-		if img is not None:
-			if self.ctx.cfg.save.is_pkg:
-				task = self._update_package
-			else:
-				task = self._save_img
-			await self.ctx.loop.run_in_executor(None, task, img)
-			logging.info("{}".format(img.name()))
+		if self.ctx.cfg.save.is_pkg:
+			task = self._update_package
+		else:
+			task = self._save_image
+		await self.ctx.loop.run_in_executor(None, task, img)
+		logging.info("{}".format(img.name()))
 		self._update_counters()
 	
 	async def _run(self):

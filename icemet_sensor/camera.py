@@ -1,8 +1,9 @@
+from icemet_sensor.util import utcnow
+
 import numpy as np
 
 import asyncio
 import random
-import time
 
 class CameraException(Exception):
 	pass
@@ -10,7 +11,7 @@ class CameraException(Exception):
 class CameraResult:
 	def __init__(self, **kwargs):
 		self.image = kwargs.get("image", None)
-		self.time = kwargs.get("time", None)
+		self.datetime = kwargs.get("datetime", None)
 
 class Camera:
 	async def start(self) -> None:
@@ -31,7 +32,7 @@ class Camera:
 	def close(self) -> None:
 		raise NotImplementedError()
 
-class DummyCamera:
+class DummyCamera(Camera):
 	def __init__(self, size=(640, 480), low=0, high=255):
 		self.size = size
 		self.low = low
@@ -51,7 +52,7 @@ class DummyCamera:
 				size=(self.size[1], self.size[0]),
 				dtype=np.uint8
 			),
-			time=time.time()
+			datetime=utcnow()
 		)
 	
 	def close(self):

@@ -1,5 +1,5 @@
 from icemet_sensor.camera import CameraResult, Camera, CameraException
-from icemet_sensor.util import utcnow
+from icemet_sensor.util import datetime_utc
 
 import numpy as np
 import PySpin
@@ -7,7 +7,6 @@ import PySpin
 import asyncio
 import collections
 import concurrent.futures
-from datetime import datetime, timezone
 import json
 import time
 
@@ -70,29 +69,31 @@ class SpinCamera(Camera):
 		self._start_stamp = None
 	
 	async def start(self):
-		self.cam.BeginAcquisition()
+		if not self.cam.IsStreaming():
+			self.cam.BeginAcquisition()
 	
 	async def stop(self):
-		self.cam.EndAcquisition()
+		if self.cam.IsStreaming():
+			self.cam.EndAcquisition()
 	
 	def _datetime(self, res):
 		if not self.hwclock:
-			return utcnow()
+			return datetime_utc()
 		
 		stamp = res.GetTimeStamp()
 		if self._start_stamp is None or stamp < self._start_stamp:
 			self._start_stamp = stamp
 			self._start_time = time.time()
-			return utcnow()
+			return datetime_utc()
 		
 		_time = (stamp - self._start_stamp) / 10**9 + self._start_time
-		return datetime.fromtimestamp(_time, timezone.utc)
+		return datetime_utc(_time)
 	
 	def _read(self):
 		res = self.cam.GetNextImage()
-		_datetime = self._datetime(res)
+		datetime = self._datetime(res)
 		image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
-		return CameraResult(image=image, datetime=_datetime)
+		return CameraResult(image=image, datetime=datetime)
 	
 	async def read(self):
 		return await self._loop.run_in_executor(self._pool, self._read)

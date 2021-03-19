@@ -1,11 +1,12 @@
 from icemet_sensor.sensor import Sensor
+from icemet_sensor.util import datetime_utc
 
 from icemet.img import Image, BGSubStack
 from icemet.file import FileStatus
 from icemet.pkg import create_package
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 import logging
 import os
 import time
@@ -30,9 +31,6 @@ class Measure:
 		th = self.ctx.cfg.preproc.empty_th
 		return th > 0 and img.dynrange() < th
 	
-	def _utc_next(self):
-		return datetime.fromtimestamp(self._time_next, timezone.utc)
-	
 	def _preproc(self, img):
 		# Crop
 		shape_h, shape_w = img.mat.shape
@@ -50,7 +48,7 @@ class Measure:
 			if not self._bgsub.push(img):
 				return None
 			img = self._bgsub.current()
-			if img.datetime < self._utc_next():
+			if img.datetime < datetime_utc(self._time_next):
 				return None
 			img = self._bgsub.meddiv()
 		
@@ -111,7 +109,7 @@ class Measure:
 				return
 			img.frame = self._frame
 		else:
-			if img.datetime < self._utc_next():
+			if img.datetime < datetime_utc(self._time_next):
 				return
 			img.frame = self._frame
 		

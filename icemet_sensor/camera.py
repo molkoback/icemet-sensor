@@ -1,4 +1,4 @@
-from icemet_sensor.util import utcnow
+from icemet_sensor.util import datetime_utc
 
 import numpy as np
 
@@ -52,7 +52,7 @@ class DummyCamera(Camera):
 				size=(self.size[1], self.size[0]),
 				dtype=np.uint8
 			),
-			datetime=utcnow()
+			datetime=datetime_utc()
 		)
 	
 	def close(self):

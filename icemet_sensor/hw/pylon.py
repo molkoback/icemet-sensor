@@ -1,5 +1,5 @@
 from icemet_sensor.camera import CameraResult, Camera, CameraException
-from icemet_sensor.util import utcnow
+from icemet_sensor.util import datetime_utc
 
 from pypylon import pylon
 
@@ -31,7 +31,7 @@ class PylonCamera(Camera):
 	
 	def _read(self):
 		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
-		datetime = utcnow()
+		datetime = datetime_utc()
 		image = self.converter.Convert(res).GetArray()
 		return CameraResult(image=image, datetime=datetime)
 	

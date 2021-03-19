@@ -9,11 +9,10 @@ type: "png"
 
 # Measurement settings
 measurement: {
+location: "",
 burst_fps: 1,
 burst_len: 60,
 wait: 0,
-timeout: 5,
-black_th: 10
 }
 
 # Sensor settings

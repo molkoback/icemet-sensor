@@ -27,14 +27,15 @@ class SensorConfig(Config):
 		self.save.ext = ext if ext else "."+self.save.type
 		self.save.tmp = os.path.join(self.save.dir, "tmp" + self.save.ext)
 		self.meas = type("MeasureParam", (object,), {
+			"location": dict["measurement"]["location"],
 			"burst_fps": float(dict["measurement"]["burst_fps"]),
 			"burst_delay": 1.0 / float(dict["measurement"]["burst_fps"]),
 			"burst_len": int(dict["measurement"]["burst_len"]),
 			"wait": float(dict["measurement"]["wait"])
 		})
 		self.sensor = type("SensorParam", (object,), {
+			"type": dict["sensor"]["type"],
 			"id": int(dict["sensor"]["id"], 16),
-			"name": dict["sensor"]["name"],
 			"timeout": float(dict["sensor"]["timeout"]),
 			"black_th": float(dict["sensor"]["black_th"])
 		})

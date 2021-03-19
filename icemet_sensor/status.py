@@ -27,12 +27,13 @@ class Status:
 			
 			# Login
 			auth = aiohttp.BasicAuth(self.ctx.cfg.status.user, self.ctx.cfg.status.passwd)
-			await session.post(self.ctx.cfg.status.url, auth=auth, ssl=self._ssl_ctx)
+			resp = await session.post(self.ctx.cfg.status.url, auth=auth, ssl=self._ssl_ctx)
 			
 			# Send message
 			form = {
+				"type": self.ctx.cfg.sensor.type,
 				"id": self.ctx.cfg.sensor.id,
-				"name": self.ctx.cfg.sensor.name,
+				"location": self.ctx.cfg.meas.location,
 				"time": time.time()
 			}
 			async with session.post(self.ctx.cfg.status.url, data=form, ssl=self._ssl_ctx) as resp:

@@ -63,7 +63,7 @@ def main():
 		logging.info("Config file created '{}'".format(ctx.args.config))
 	ctx.cfg = SensorConfig(ctx.args.config)
 	
-	logging.info("{} ({:02X})".format(ctx.cfg.sensor.name, ctx.cfg.sensor.id))
+	logging.info("{} ({:02X})".format(ctx.cfg.sensor.type, ctx.cfg.sensor.id))
 	
 	# Create tasks
 	tasks = []

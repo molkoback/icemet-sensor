@@ -5,6 +5,8 @@ from icemet.img import Image, BGSubStack
 from icemet.file import FileStatus
 from icemet.pkg import create_package
 
+import cv2
+
 import asyncio
 from datetime import datetime
 import logging
@@ -31,6 +33,12 @@ class Measure:
 		th = self.ctx.cfg.preproc.empty_th
 		return th > 0 and img.dynrange() < th
 	
+	def _show(self, img):
+		f = 640 / img.mat.shape[1]
+		mat = cv2.resize(img.mat, dsize=None, fx=f, fy=f, interpolation=cv2.INTER_NEAREST)
+		cv2.imshow("ICEMET-sensor", mat)
+		cv2.waitKey(1)
+	
 	def _preproc(self, img):
 		# Crop
 		shape_h, shape_w = img.mat.shape
@@ -50,6 +58,8 @@ class Measure:
 			img = self._bgsub.current()
 			if img.datetime < datetime_utc(self._time_next):
 				return None
+			if self.ctx.args.image:
+				self._show(img)
 			img = self._bgsub.meddiv()
 		
 		# Empty check
@@ -111,6 +121,8 @@ class Measure:
 		else:
 			if img.datetime < datetime_utc(self._time_next):
 				return
+			if self.ctx.args.image:
+				self._show(img)
 			img.frame = self._frame
 		
 		# Create package

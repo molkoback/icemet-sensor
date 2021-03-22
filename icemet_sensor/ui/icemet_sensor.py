@@ -25,6 +25,7 @@ _default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")
 	parser.add_argument("-c", "--config", type=str, help="config file (default: {})".format(_default_config_file), metavar="str", default=_default_config_file)
+	parser.add_argument("-i", "--image", action="store_true", help="show image")
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_now", action="store_true", help="start at the next minute")
 	parser.add_argument("--no_images", action="store_true", help="don't take images")

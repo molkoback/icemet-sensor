@@ -9,23 +9,11 @@ import logging
 import os
 import time
 
-def _find_files(dir):
-	files = []
-	for fn in os.listdir(dir):
-		path = os.path.join(dir, fn)
-		if os.path.isfile(path):
-			try:
-				files.append(File.frompath(fn))
-			except:
-				pass
-	files.sort()
-	return files
-
 class Sender:
 	def __init__(self, ctx):
 		self.ctx = ctx
 		self._client = aioftp.Client()
-		self._pool = concurrent.futures.ProcessPoolExecutor()
+		self._pool = concurrent.futures.ThreadPoolExecutor()
 	
 	async def _connected(self):
 		try:
@@ -39,8 +27,20 @@ class Sender:
 		await self._client.login(self.ctx.cfg.ftp.user, self.ctx.cfg.ftp.passwd)
 		logging.debug("Connected")
 	
+	def _find_files(self):
+		files = []
+		for fn in os.listdir(self.ctx.cfg.save.dir):
+			path = os.path.join(self.ctx.cfg.save.dir, fn)
+			if os.path.isfile(path):
+				try:
+					files.append((File.frompath(fn), path))
+				except:
+					pass
+		files.sort(key=lambda t: t[0])
+		return files
+	
 	async def _cycle(self):
-		files = await self.ctx.loop.run_in_executor(self._pool, _find_files, self.ctx.cfg.save.dir)
+		files = await self.ctx.loop.run_in_executor(self._pool, self._find_files)
 		if not files:
 			await asyncio.sleep(1.0)
 			return
@@ -53,22 +53,21 @@ class Sender:
 				await asyncio.sleep(1.0)
 				return
 		
-		for f in files:
+		for f, path_src in files:
 			if self.ctx.quit.is_set():
 				break
 			
 			t = time.time()
-			fn_in = f.path(root=self.ctx.cfg.save.dir, ext=self.ctx.cfg.save.ext, subdirs=False)
-			fn_out = self.ctx.cfg.ftp.dir + "/" + f.path(root="", ext=self.ctx.cfg.save.ext, subdirs=False)
+			path_dst = self.ctx.cfg.ftp.dir + "/" + os.path.basename(path_src)
 			try:
-				await self._client.upload(fn_in, self.ctx.cfg.ftp.tmp, write_into=True)
-				await self._client.rename(self.ctx.cfg.ftp.tmp, fn_out)
+				await self._client.upload(path_src, self.ctx.cfg.ftp.tmp, write_into=True)
+				await self._client.rename(self.ctx.cfg.ftp.tmp, path_dst)
 			except:
 				logging.error("Upload failed")
 				await asyncio.sleep(1.0)
 				return
 			
-			await self.ctx.loop.run_in_executor(None, os.remove, fn_in)
+			await self.ctx.loop.run_in_executor(self._pool, os.remove, path_src)
 			logging.debug("Sent {} ({:.2f} s)".format(f.name(), time.time()-t))
 	
 	async def run(self):

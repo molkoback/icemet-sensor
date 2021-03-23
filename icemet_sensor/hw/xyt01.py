@@ -3,6 +3,7 @@ from icemet_sensor.temp_relay import TempRelay, TempRelayException
 import serial
 
 import asyncio
+import concurrent
 import time
 
 class XYT01(TempRelay):
@@ -13,6 +14,7 @@ class XYT01(TempRelay):
 		self.hyst = hyst
 		
 		self._loop = asyncio.get_event_loop()
+		self._pool = concurrent.futures.ThreadPoolExecutor()
 		self._write_delay = 0.5
 		self._write_time = 0
 		
@@ -37,7 +39,7 @@ class XYT01(TempRelay):
 		return data.split("\r\n")
 	
 	async def _aread(self):
-		return await self._loop.run_in_executor(None, self._read)
+		return await self._loop.run_in_executor(self._pool, self._read)
 	
 	def _write_now(self, line):
 		self._write_time = time.time()

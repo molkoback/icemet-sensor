@@ -8,6 +8,7 @@ from icemet.pkg import create_package
 import cv2
 
 import asyncio
+import concurrent
 from datetime import datetime
 import logging
 import os
@@ -28,18 +29,21 @@ class Measure:
 		len = self.ctx.cfg.preproc.bgsub_stack_len
 		if len > 0:
 			self._bgsub = BGSubStack(len)
+		self._pool = concurrent.futures.ThreadPoolExecutor()
 	
 	def _is_empty(self, img):
 		th = self.ctx.cfg.preproc.empty_th
 		return th > 0 and img.dynrange() < th
 	
-	def _show(self, img):
-		f = 640 / img.mat.shape[1]
-		mat = cv2.resize(img.mat, dsize=None, fx=f, fy=f, interpolation=cv2.INTER_NEAREST)
-		cv2.imshow("ICEMET-sensor", mat)
-		cv2.waitKey(1)
+	async def _show(self, img):
+		def func():
+			f = 640 / img.mat.shape[1]
+			mat = cv2.resize(img.mat, dsize=None, fx=f, fy=f, interpolation=cv2.INTER_NEAREST)
+			cv2.imshow("ICEMET-sensor", mat)
+			cv2.waitKey(1)
+		await self.ctx.loop.run_in_executor(self._pool, func)
 	
-	def _preproc(self, img):
+	async def _preproc(self, img):
 		# Crop
 		shape_h, shape_w = img.mat.shape
 		crop = self.ctx.cfg.preproc.crop
@@ -59,7 +63,7 @@ class Measure:
 			if img.datetime < datetime_utc(self._time_next):
 				return None
 			if self.ctx.args.image:
-				self._show(img)
+				await self._show(img)
 			img = self._bgsub.meddiv()
 		
 		# Empty check
@@ -113,7 +117,7 @@ class Measure:
 		# Preprocess
 		if self.ctx.cfg.preproc.enable:
 			t = time.time()
-			img = self._preproc(img)
+			img = await self._preproc(img)
 			logging.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
 			if img is None:
 				return
@@ -122,7 +126,7 @@ class Measure:
 			if img.datetime < datetime_utc(self._time_next):
 				return
 			if self.ctx.args.image:
-				self._show(img)
+				await self._show(img)
 			img.frame = self._frame
 		
 		# Create package
@@ -141,7 +145,7 @@ class Measure:
 			task = self._update_package
 		else:
 			task = self._save_image
-		await self.ctx.loop.run_in_executor(None, task, img)
+		await self.ctx.loop.run_in_executor(self._pool, task, img)
 		logging.info("{}".format(img.name()))
 		self._update_counters()
 	

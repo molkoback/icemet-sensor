@@ -25,18 +25,14 @@ class Status:
 			if self._ssl_ctx is None:
 				await self._create_ssl_context(session)
 			
-			# Login
 			auth = aiohttp.BasicAuth(self.ctx.cfg.status.user, self.ctx.cfg.status.passwd)
-			resp = await session.post(self.ctx.cfg.status.url, auth=auth, ssl=self._ssl_ctx)
-			
-			# Send message
 			form = {
 				"type": self.ctx.cfg.sensor.type,
 				"id": self.ctx.cfg.sensor.id,
 				"location": self.ctx.cfg.meas.location,
 				"time": time.time()
 			}
-			async with session.post(self.ctx.cfg.status.url, data=form, ssl=self._ssl_ctx) as resp:
+			async with session.post(self.ctx.cfg.status.url, auth=auth, data=form, ssl=self._ssl_ctx) as resp:
 				delay = (await resp.json())["delay"]
 				logging.debug("Status message sent ({:.2f} s)".format(delay))
 	

@@ -24,7 +24,7 @@ class DummyTempRelay(TempRelay):
 	async def disable(self):
 		pass
 	
-	def close():
+	def close(self):
 		pass
 
 temp_relays = {"dummy": DummyTempRelay}

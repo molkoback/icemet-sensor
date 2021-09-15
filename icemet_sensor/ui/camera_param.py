@@ -17,6 +17,7 @@ def _parse_args():
 def main():
 	args = _parse_args()
 	cfg = SensorConfig(args.cfg)
+	cfg.camera.kwargs["params"] = None
 	cam = create_camera(cfg.camera.name, **cfg.camera.kwargs)
 	if args.output:
 		cam.save_params(args.output)

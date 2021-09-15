@@ -34,9 +34,9 @@ setup(
 	entry_points={
 		"console_scripts": [
 			"icemet-sensor = icemet_sensor.ui.icemet_sensor:main",
-			"icemet-camera-param = icemet_sensor.ui.icemet_camera_param:main",
-			"icemet-laser-on = icemet_sensor.ui.icemet_laser:laser_on_main",
-			"icemet-laser-off = icemet_sensor.ui.icemet_laser:laser_off_main",
+			"icemet-camera-param = icemet_sensor.ui.camera_param:main",
+			"icemet-laser-on = icemet_sensor.ui.laser:laser_on_main",
+			"icemet-laser-off = icemet_sensor.ui.laser:laser_off_main",
 			"icemet-temp-relay = icemet_sensor.ui.temp_relay:main"
 		]
 	},

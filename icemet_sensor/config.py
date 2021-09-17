@@ -44,19 +44,11 @@ class SensorConfig(Config):
 		self.temp_relay = None
 		if dict["temp_relay"]:
 			self.temp_relay = self._creatable(dict["temp_relay"], "TempRelayParam")
-		self.ftp = type("FTPParam", (object,), {
-			"host": dict["ftp"]["host"],
-			"port": int(dict["ftp"]["port"]),
-			"user": dict["ftp"]["user"],
-			"passwd": dict["ftp"]["passwd"],
-			"dir": dict["ftp"]["dir"],
-			"tmp": None
+		self.upload = type("UploadParam", (object,), {
+			"url": dict["upload"]["url"]
 		})
-		self.ftp.tmp = self.ftp.dir + "/tmp" + self.save.ext
 		self.status = type("StatusParam", (object,), {
-			"url": dict["status"]["url"],
-			"user": dict["status"]["user"],
-			"passwd": dict["status"]["passwd"],
+			"url": dict["status"]["url"]
 		})
 		self.preproc = type("PreprocParam", (object,), {
 			"enable": dict["preproc"]["enable"],

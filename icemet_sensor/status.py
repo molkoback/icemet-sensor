@@ -1,5 +1,6 @@
+from icemet_sensor.util import Url
+
 import aiohttp
-import certifi
 
 import asyncio
 import logging
@@ -10,29 +11,18 @@ class Status:
 	def __init__(self, ctx, **kwargs):
 		self.ctx = ctx
 		self.delay = kwargs.get("delay", 10 * 60)
-		self._ssl_ctx = None
-	
-	async def _create_ssl_context(self, session):
-		ssl_ctx = ssl.create_default_context(cafile=certifi.where())
-		try:
-			await session.post(self.ctx.cfg.status.url, ssl=ssl_ctx)
-			self._ssl_ctx = ctx
-		except:
-			self._ssl_ctx = False
+		self._url = Url(self.ctx.cfg.status.url)
 	
 	async def _send(self):
 		async with aiohttp.ClientSession() as session:
-			if self._ssl_ctx is None:
-				await self._create_ssl_context(session)
-			
-			auth = aiohttp.BasicAuth(self.ctx.cfg.status.user, self.ctx.cfg.status.passwd)
+			auth = aiohttp.BasicAuth(self._url.user, self._url.password)
 			form = {
 				"type": self.ctx.cfg.sensor.type,
 				"id": self.ctx.cfg.sensor.id,
 				"location": self.ctx.cfg.meas.location,
 				"time": time.time()
 			}
-			async with session.post(self.ctx.cfg.status.url, auth=auth, data=form, ssl=self._ssl_ctx) as resp:
+			async with session.post(self._url.join(hide_auth=True), auth=auth, data=form) as resp:
 				delay = (await resp.json())["delay"]
 				logging.debug("Status message sent ({:.2f} s)".format(delay))
 	

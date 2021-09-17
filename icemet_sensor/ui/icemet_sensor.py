@@ -1,8 +1,8 @@
 from icemet_sensor import Context, version, homedir
 from icemet_sensor.config import create_config_file, SensorConfig
 from icemet_sensor.measure import Measure
-from icemet_sensor.sender import Sender
 from icemet_sensor.status import Status
+from icemet_sensor.uploader import Uploader
 from icemet_sensor.util import collect_garbage
 
 import aioftp
@@ -29,7 +29,7 @@ def _parse_args():
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_now", action="store_true", help="start at the next minute")
 	parser.add_argument("--no_images", action="store_true", help="don't take images")
-	parser.add_argument("--no_send", action="store_true", help="don't send images over FTP")
+	parser.add_argument("--no_upload", action="store_true", help="don't upload images")
 	parser.add_argument("--no_status", action="store_true", help="don't send status messages")
 	parser.add_argument("-d", "--debug", action="store_true", help="enable debug messages")
 	parser.add_argument("-V", "--version", action="store_true", help="print version information")
@@ -71,8 +71,8 @@ def main():
 	if not ctx.args.no_images:
 		tasks.append(ctx.loop.create_task(collect_garbage(ctx, 2.0)))
 		tasks.append(ctx.loop.create_task(Measure(ctx).run()))
-	if not ctx.args.no_send:
-		tasks.append(ctx.loop.create_task(Sender(ctx).run()))
+	if not ctx.args.no_upload:
+		tasks.append(ctx.loop.create_task(Uploader(ctx).run()))
 	if not ctx.args.no_status:
 		tasks.append(ctx.loop.create_task(Status(ctx).run()))
 	if not tasks:

@@ -32,20 +32,14 @@ laser: {"dummy": {}}
 # TempRelays: dummy{}, xyt01{port,offset,thresh,hyst}
 temp_relay: {}
 
-# FTP settings
-ftp: {
-host: "localhost",
-port: 21,
-user: "icemet",
-passwd: "",
-dir: "."
+# Upload settings
+upload: {
+url: "ftp://user:password@localhost:21/icemet"
 }
 
 # Status settings
 status: {
-url: "http://localhost/api/status/",
-user: "icemet",
-passwd: ""
+url: "http://icemet@localhost/api/status/"
 }
 
 # Preprocessing

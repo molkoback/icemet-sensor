@@ -17,8 +17,8 @@ wait: 0,
 
 # Sensor settings
 sensor: {
+type: "ICEMET",
 id: "00",
-name: "ICEMET",
 timeout: 5,
 black_th: 10
 }

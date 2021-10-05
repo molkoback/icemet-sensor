@@ -110,7 +110,6 @@ class Uploader:
 				break
 			
 			t = time.time()
-			await self._proto.upload(path)
 			try:
 				await self._proto.upload(path)
 			except:
@@ -122,7 +121,7 @@ class Uploader:
 			logging.debug("Sent {} ({:.2f} s)".format(f.name(), time.time()-t))
 	
 	async def run(self):
-		logging.info("Upload {}".format(self._proto.url.join()))
+		logging.info("Upload {}".format(self._proto.url.join(hide_auth=True)))
 		try:
 			while not self.ctx.quit.is_set():
 				await self._cycle()

@@ -132,12 +132,13 @@ class Measure:
 		# Create package
 		if self.ctx.cfg.save.is_pkg and self._pkg is None:
 			self._pkg = create_package(
-				self.ctx.cfg.save.type,
+				self.ctx.cfg.save.type.name,
 				sensor_id=self.ctx.cfg.sensor.id,
 				datetime=img.datetime,
 				status=FileStatus.EMPTY,
 				len=0,
-				fps=self.ctx.cfg.meas.burst_fps
+				fps=self.ctx.cfg.meas.burst_fps,
+				**self.ctx.cfg.save.type.kwargs
 			)
 		
 		# Save or put in the package

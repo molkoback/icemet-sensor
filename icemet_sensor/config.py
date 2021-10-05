@@ -17,14 +17,14 @@ class SensorConfig(Config):
 		super().set_dict(dict)
 		self.save = type("SaveParam", (object,), {
 			"dir": os.path.expanduser(os.path.normpath(dict["save"]["dir"])),
-			"type": dict["save"]["type"],
+			"type": self._createable(dict["save"]["type"]),
 			"is_pkg": False,
 			"ext": None,
 			"tmp": None
 		})
-		ext = name2ext(self.save.type)
+		ext = name2ext(self.save.type.name)
 		self.save.is_pkg = bool(ext)
-		self.save.ext = ext if ext else "."+self.save.type
+		self.save.ext = ext if ext else "."+self.save.type.name
 		self.save.tmp = os.path.join(self.save.dir, "tmp" + self.save.ext)
 		self.meas = type("MeasureParam", (object,), {
 			"location": dict["measurement"]["location"],
@@ -39,11 +39,11 @@ class SensorConfig(Config):
 			"timeout": float(dict["sensor"]["timeout"]),
 			"black_th": float(dict["sensor"]["black_th"])
 		})
-		self.camera = self._creatable(dict["camera"], "CameraParam")
-		self.laser = self._creatable(dict["laser"], "LaserParam")
+		self.camera = self._createable(dict["camera"])
+		self.laser = self._createable(dict["laser"])
 		self.temp_relay = None
 		if dict["temp_relay"]:
-			self.temp_relay = self._creatable(dict["temp_relay"], "TempRelayParam")
+			self.temp_relay = self._createable(dict["temp_relay"])
 		self.upload = type("UploadParam", (object,), {
 			"url": dict["upload"]["url"]
 		})
@@ -63,9 +63,9 @@ class SensorConfig(Config):
 			"bgsub_stack_len": int(dict["preproc"]["bgsub_stack_len"])
 		})
 	
-	def _creatable(self, obj, clsname):
+	def _createable(self, obj):
 		k = next(iter(obj))
-		return type(clsname, (object,), {
+		return type("Createable", (object,), {
 			"name": k,
 			"kwargs": obj[k]
 		})

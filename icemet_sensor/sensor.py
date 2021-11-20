@@ -4,6 +4,7 @@ from icemet_sensor.temp_relay import create_temp_relay
 
 import numpy as np
 
+import asyncio
 import logging
 import multiprocessing as mp
 import time
@@ -45,8 +46,12 @@ class Sensor:
 	
 	async def read(self):
 		t = time.time()
-		while time.time() - t < self.cfg.sensor.timeout:
-			res = await self._cam.read()
+		timeout = self.cfg.sensor.timeout
+		while time.time() - t < timeout:
+			try:
+				res = await asyncio.wait_for(self._cam.read(), timeout)
+			except asyncio.TimeoutError:
+				raise SensorException("Sensor failed (timeout)")
 			if not self._is_black(res.image):
 				logging.debug("Image read ({:.2f} s)".format(time.time()-t))
 				return res

@@ -90,7 +90,7 @@ class SpinCamera(Camera):
 		return datetime_utc(_time)
 	
 	def _read(self):
-		res = self.cam.GetNextImage()
+		res = self.cam.GetNextImage(5000)
 		datetime = self._datetime(res)
 		image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
 		return CameraResult(image=image, datetime=datetime)

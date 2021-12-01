@@ -27,9 +27,6 @@ class XYT01(TempRelay):
 		self._ser.open()
 		self._write_now("start")
 	
-	def close(self):
-		self._ser.close()
-	
 	def _read(self):
 		if self._ser.in_waiting:
 			data = self._ser.read(self._ser.in_waiting)
@@ -87,3 +84,6 @@ class XYT01(TempRelay):
 	
 	async def disable(self):
 		await self._write_lines(["off"])
+	
+	def _close(self):
+		self._ser.close()

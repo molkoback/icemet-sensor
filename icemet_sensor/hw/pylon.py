@@ -7,7 +7,7 @@ import asyncio
 import concurrent.futures
 
 class PylonCamera(Camera):
-	def __init__(self, params=None):
+	def __init__(self, params=None, timeout=1.0):
 		try:
 			self.cam = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
 		except:
@@ -22,6 +22,8 @@ class PylonCamera(Camera):
 		self.converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
 		self._loop = asyncio.get_event_loop()
 		self._pool = concurrent.futures.ThreadPoolExecutor()
+		
+		self.timeout = timeout
 	
 	async def start(self):
 		self.cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -30,13 +32,19 @@ class PylonCamera(Camera):
 		self.cam.StopGrabbing()
 	
 	def _read(self):
-		res = self.cam.RetrieveResult(1000, pylon.TimeoutHandling_ThrowException)
-		datetime = datetime_utc()
-		image = self.converter.Convert(res).GetArray()
-		return CameraResult(image=image, datetime=datetime)
+		try:
+			res = self.cam.RetrieveResult(int(self.timeout * 1000), pylon.TimeoutHandling_ThrowException)
+			datetime = datetime_utc()
+			image = self.converter.Convert(res).GetArray()
+			return CameraResult(image=image, datetime=datetime)
+		except:
+			return None
 	
 	async def read(self):
-		return await self._loop.run_in_executor(self._pool, self._read)
+		res = await self._loop.run_in_executor(self._pool, self._read)
+		if res is None:
+			raise CameraException("PylonCamera failed")
+		return res
 	
 	def save_params(self, fn):
 		pylon.FeaturePersistence.Save(fn, self.cam.GetNodeMap())
@@ -44,5 +52,5 @@ class PylonCamera(Camera):
 	def load_params(self, fn):
 		pylon.FeaturePersistence.Load(fn, self.cam.GetNodeMap(), True)
 	
-	def close(self):
+	def _close(self):
 		self.cam.Close()

@@ -8,6 +8,7 @@ import asyncio
 import collections
 import concurrent.futures
 import json
+import logging
 import time
 
 class SpinParameter:
@@ -45,7 +46,7 @@ class SpinParameter:
 			PySpin.CEnumerationPtr(self.node).SetIntValue(val)
 
 class SpinCamera(Camera):
-	def __init__(self, id=0, params=None, hwclock=True):
+	def __init__(self, id=0, params=None, hwclock=True, timeout=1.0):
 		self.system = None
 		self.cam_list = None
 		self.cam = None
@@ -65,6 +66,7 @@ class SpinCamera(Camera):
 		self._pool = concurrent.futures.ThreadPoolExecutor()
 		
 		self.hwclock = hwclock
+		self.timeout = timeout
 		self._start_time = None
 		self._start_stamp = None
 	
@@ -90,13 +92,19 @@ class SpinCamera(Camera):
 		return datetime_utc(_time)
 	
 	def _read(self):
-		res = self.cam.GetNextImage(5000)
-		datetime = self._datetime(res)
-		image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
-		return CameraResult(image=image, datetime=datetime)
+		try:
+			res = self.cam.GetNextImage(int(self.timeout * 1000))
+			datetime = self._datetime(res)
+			image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
+			return CameraResult(image=image, datetime=datetime)
+		except:
+			return None
 	
 	async def read(self):
-		return await self._loop.run_in_executor(self._pool, self._read)
+		res = await self._loop.run_in_executor(self._pool, self._read)
+		if res is None:
+			raise CameraException("SpinCamera failed")
+		return res
 	
 	def _traverse(self, node, params):
 		category = PySpin.CCategoryPtr(node)
@@ -133,7 +141,7 @@ class SpinCamera(Camera):
 			except:
 				raise CameraException("Failed parameter '{}'".format(name))
 	
-	def close(self):
+	def _close(self):
 		if not self.cam is None:
 			if self.cam.IsStreaming():
 				self.cam.EndAcquisition()

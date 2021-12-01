@@ -25,5 +25,5 @@ class MyRIO(Laser):
 	async def off(self):
 		self._kill()
 	
-	def close(self):
+	def _close(self):
 		self._kill()

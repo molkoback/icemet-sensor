@@ -1,4 +1,4 @@
-from icemet_sensor.camera import create_camera
+from icemet_sensor.camera import create_camera, CameraException
 from icemet_sensor.laser import create_laser
 from icemet_sensor.temp_relay import create_temp_relay
 
@@ -46,15 +46,16 @@ class Sensor:
 	
 	async def read(self):
 		t = time.time()
-		timeout = self.cfg.sensor.timeout
-		while time.time() - t < timeout:
+		while time.time() - t < self.cfg.sensor.timeout:
 			try:
-				res = await asyncio.wait_for(self._cam.read(), timeout)
-			except asyncio.TimeoutError:
-				raise SensorException("Sensor failed (timeout)")
-			if not self._is_black(res.image):
-				logging.debug("Image read ({:.2f} s)".format(time.time()-t))
-				return res
+				res = await self._cam.read()
+				if not self._is_black(res.image):
+					logging.debug("Image read ({:.2f} s)".format(time.time()-t))
+					return res
+			except CameraException as e:
+				self._on = False
+				raise e
+		self._on = False
 		raise SensorException("Sensor failed (black image)")
 	
 	async def temp(self):

@@ -11,8 +11,16 @@ class TempRelay:
 	async def disable(self) -> None:
 		raise NotImplementedError()
 	
-	def close(self) -> None:
+	def _close(self) -> None:
 		raise NotImplementedError()
+	
+	def close(self):
+		try:
+			self._close()
+		except NotImplementedError:
+			pass
+		except:
+			logging.debug("Failed to close TempRelay")
 
 class DummyTempRelay(TempRelay):
 	async def temp(self):
@@ -22,9 +30,6 @@ class DummyTempRelay(TempRelay):
 		pass
 	
 	async def disable(self):
-		pass
-	
-	def close(self):
 		pass
 
 temp_relays = {"dummy": DummyTempRelay}

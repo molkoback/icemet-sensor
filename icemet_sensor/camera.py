@@ -29,8 +29,16 @@ class Camera:
 	def load_params(self, fn: str) -> None:
 		raise NotImplementedError()
 	
-	def close(self) -> None:
+	def _close(self) -> None:
 		raise NotImplementedError()
+	
+	def close(self):
+		try:
+			self._close()
+		except NotImplementedError:
+			pass
+		except:
+			logging.debug("Failed to close Camera")
 
 class DummyCamera(Camera):
 	def __init__(self, size=(640, 480), low=0, high=255):
@@ -54,9 +62,6 @@ class DummyCamera(Camera):
 			),
 			datetime=datetime_utc()
 		)
-	
-	def close(self):
-		pass
 
 cameras = {"dummy": DummyCamera}
 try:

@@ -84,6 +84,7 @@ def main():
 			await task
 	try:
 		ctx.loop.run_until_complete(_wait())
+		sys.exit(1)
 	except KeyboardInterrupt:
 		ctx.quit.set()
 		ctx.loop.run_until_complete(_wait())

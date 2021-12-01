@@ -74,6 +74,6 @@ class PicoLAS(Laser):
 	async def off(self):
 		await self._write_params(self.off_params)
 	
-	def close(self):
+	def _close(self):
 		if not self._ser is None:
 			self._ser.close()

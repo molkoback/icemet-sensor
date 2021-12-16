@@ -28,6 +28,8 @@ def _parse_args():
 	parser.add_argument("-i", "--image", action="store_true", help="show image")
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_now", action="store_true", help="start at the next minute")
+	parser.add_argument("--start_next_10min", action="store_true", help="start at the next 10th minute")
+	parser.add_argument("--start_next_hour", action="store_true", help="start at the next hour")
 	parser.add_argument("--no_images", action="store_true", help="don't take images")
 	parser.add_argument("--no_upload", action="store_true", help="don't upload images")
 	parser.add_argument("--no_status", action="store_true", help="don't send status messages")

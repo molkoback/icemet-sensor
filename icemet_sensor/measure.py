@@ -75,8 +75,8 @@ class Measure:
 		self._pkg.len += 1
 		
 		if img.status == FileStatus.NOTEMPTY:
-			self._pkg.add_img(img)
 			self._pkg.status = FileStatus.NOTEMPTY
+		self._pkg.add_img(img)
 		
 		if img.frame == self.ctx.cfg.meas.burst_len:
 			t = time.time()
@@ -183,10 +183,10 @@ class Measure:
 		try:
 			await self._run()
 		except KeyboardInterrupt:
-			self.ctx.quit.set()
+			pass
 		except Exception as e:
 			logging.error(str(e))
-			self.ctx.quit.set()
-		finally:
-			await self.sensor.off()
-			self.sensor.close()
+		self._pkg = None
+		await self.sensor.off()
+		self.sensor.close()
+		self.ctx.quit.set()

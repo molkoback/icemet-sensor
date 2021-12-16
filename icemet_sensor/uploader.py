@@ -10,6 +10,7 @@ import concurrent.futures
 import logging
 import os
 import time
+import uuid
 
 class ProtocolException(Exception):
 	pass
@@ -45,9 +46,8 @@ class FTP(Protocol):
 		
 		file = os.path.basename(path)
 		dir = self.url.path
-		if not dir.endswith("/"):
-			dir += "/"
-		tmp = dir + str(int(time.time()*1000)) + os.path.splitext(file)[1]
+		dir = dir if dir.endswith("/") else dir+"/"
+		tmp = dir + ".icemet-" + uuid.uuid4().hex + os.path.splitext(file)[1]
 		dst = dir + file
 		
 		await self._client.upload(path, tmp, write_into=True)
@@ -126,7 +126,7 @@ class Uploader:
 			while not self.ctx.quit.is_set():
 				await self._cycle()
 		except KeyboardInterrupt:
-			self.ctx.quit.set()
+			pass
 		except Exception as e:
 			logging.error(str(e))
-			self.ctx.quit.set()
+		self.ctx.quit.set()

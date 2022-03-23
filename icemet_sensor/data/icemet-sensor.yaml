@@ -23,7 +23,7 @@ timeout: 5,
 black_th: 10
 }
 
-# Cameras: dummy{size,low,high}, spin{id,params,hwclock}, pylon{params}
+# Cameras: dummy{size,low,high}, spin{serial,params,hwclock}, pylon{params}
 camera: {"dummy": {}}
 
 # Lasers: dummy{}, icemet{}, myrio{saku_laser_path}, picolas{port,on_params,off_params}

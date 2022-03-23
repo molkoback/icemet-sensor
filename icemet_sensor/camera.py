@@ -65,8 +65,9 @@ class DummyCamera(Camera):
 
 cameras = {"dummy": DummyCamera}
 try:
-	from icemet_sensor.hw.spin import SpinCamera
+	from icemet_sensor.hw.spin import SpinCamera, SpinCameraSingle
 	cameras["spin"] = SpinCamera
+	cameras["spin_single"] = SpinCameraSingle
 except:
 	pass
 try:

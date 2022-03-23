@@ -52,35 +52,46 @@ def _init_logging(level):
 	ch.setFormatter(formatter)
 	root.addHandler(ch)
 
-def main():
-	ctx = Context()
-	ctx.args = _parse_args()
-	if ctx.args.version:
-		sys.stdout.write(_version_str)
-		sys.exit(0)
-	
-	_init_logging(logging.DEBUG if ctx.args.debug else logging.INFO)
-	
-	if ctx.args.config == _default_config_file and not os.path.exists(ctx.args.config):
-		create_config_file(ctx.args.config)
-		logging.info("Config file created '{}'".format(ctx.args.config))
-	ctx.cfg = SensorConfig(ctx.args.config)
-	
-	logging.info("{} ({:02X})".format(ctx.cfg.sensor.type, ctx.cfg.sensor.id))
-	
-	# Create tasks
+def _create_tasks(ctx):
 	tasks = []
 	if not ctx.args.no_images:
-		tasks.append(ctx.loop.create_task(collect_garbage(ctx, 2.0)))
 		tasks.append(ctx.loop.create_task(Measure(ctx).run()))
 	if not ctx.args.no_upload:
 		tasks.append(ctx.loop.create_task(Uploader(ctx).run()))
 	if not ctx.args.no_status:
 		tasks.append(ctx.loop.create_task(Status(ctx).run()))
-	if not tasks:
-		sys.exit(1)
+	return tasks
+
+def main():
+	args = _parse_args()
+	if args.version:
+		sys.stdout.write(_version_str)
+		sys.exit(0)
+	
+	_init_logging(logging.DEBUG if args.debug else logging.INFO)
+	
+	if args.config == _default_config_file and not os.path.exists(args.config):
+		create_config_file(args.config)
+		logging.info("Config file created '{}'".format(args.config))
+	
+	# Create all tasks
+	tasks = []
+	quit = asyncio.Event()
+	for file in args.config.split(","):
+		ctx = Context()
+		ctx.args = args
+		ctx.cfg = SensorConfig(file)
+		ctx.quit = quit
+		logging.info("{} ({:02X})".format(ctx.cfg.sensor.type, ctx.cfg.sensor.id))
+		tasks += _create_tasks(ctx)
+	
+	# Garbage collection needed for some reason
+	if not args.no_images:
+		tasks.append(ctx.loop.create_task(collect_garbage(quit, 2.0)))
 	
 	# Run
+	if not tasks:
+		sys.exit(1)
 	async def _wait():
 		for task in tasks:
 			await task

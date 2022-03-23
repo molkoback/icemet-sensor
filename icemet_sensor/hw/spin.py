@@ -5,11 +5,21 @@ import numpy as np
 import PySpin
 
 import asyncio
+import atexit
 import collections
 import concurrent.futures
 import json
 import logging
 import time
+
+_system = PySpin.System.GetInstance()
+_cam_list = _system.GetCameras()
+_lock = asyncio.Lock()
+
+def _atexit():
+	_cam_list.Clear()
+	_system.ReleaseInstance()
+atexit.register(_atexit)
 
 class SpinParameter:
 	def __init__(self, node):
@@ -46,16 +56,13 @@ class SpinParameter:
 			PySpin.CEnumerationPtr(self.node).SetIntValue(val)
 
 class SpinCamera(Camera):
-	def __init__(self, id=0, params=None, hwclock=True, timeout=1.0):
-		self.system = None
-		self.cam_list = None
+	def __init__(self, serial=None, params=None, hwclock=True, timeout=1.0):
 		self.cam = None
-		self.system = PySpin.System.GetInstance()
-		self.cam_list = self.system.GetCameras()
-		if id >= 0 and id < self.cam_list.GetSize():
-			self.cam = self.cam_list.GetByIndex(id)
+		
+		if serial is None:
+			self.cam = _cam_list.GetByIndex(0)
 		else:
-			raise CameraException("SpinCamera not found '{}'".format(id))
+			self.cam = _cam_list.GetBySerial(serial)
 		self.cam.Init()
 		
 		if params:
@@ -148,7 +155,32 @@ class SpinCamera(Camera):
 			if self.cam.IsInitialized():
 				self.cam.DeInit()
 			del self.cam
-		if not self.cam_list is None:
-			self.cam_list.Clear()
-		if not self.system is None:
-			self.system.ReleaseInstance()
+
+class SpinCameraSingle(SpinCamera):
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		self.cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_SingleFrame)
+	
+	async def start(self):
+		pass
+	
+	async def stop(self):
+		pass
+	
+	def _read(self):
+		try:
+			self.cam.BeginAcquisition()
+			res = self.cam.GetNextImage(int(self.timeout * 1000))
+			datetime = self._datetime(res)
+			self.cam.EndAcquisition()
+			image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
+			return CameraResult(image=image, datetime=datetime)
+		except:
+			return None
+	
+	async def read(self):
+		async with _lock:
+			res = await self._loop.run_in_executor(self._pool, self._read)
+		if res is None:
+			raise CameraException("SpinCamera failed")
+		return res

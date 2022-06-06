@@ -1,8 +1,10 @@
 from icemet_sensor.util import datetime_utc
 
+import cv2
 import numpy as np
 
 import asyncio
+import os
 import random
 
 class CameraException(Exception):
@@ -63,7 +65,33 @@ class DummyCamera(Camera):
 			datetime=datetime_utc()
 		)
 
-cameras = {"dummy": DummyCamera}
+class ImageReaderCamera(Camera):
+	def __init__(self, dir=".", fps=1.0):
+		self.dir = dir
+		self.fps = fps
+		self._files = [os.path.join(dir, file) for file in os.listdir(dir)]
+		self._files.sort()
+	
+	async def start(self):
+		pass
+	
+	async def stop(self):
+		pass
+	
+	async def read(self):
+		await asyncio.sleep(1/self.fps)
+		if not self._files:
+			raise CameraException("Out of images")
+		img = cv2.imread(self._files.pop(0), cv2.IMREAD_GRAYSCALE)
+		return CameraResult(
+			image=img,
+			datetime=datetime_utc()
+		)
+
+cameras = {
+	"dummy": DummyCamera,
+	"image_reader": ImageReaderCamera
+}
 try:
 	from icemet_sensor.hw.spin import SpinCamera, SpinCameraSingle
 	cameras["spin"] = SpinCamera

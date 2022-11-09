@@ -45,7 +45,7 @@ class Measure:
 	
 	async def _preproc(self, img):
 		# Crop
-		shape_h, shape_w = img.mat.shape
+		shape_w, shape_h = img.mat.shape[1], img.mat.shape[0]
 		crop = self.ctx.cfg.preproc.crop
 		if crop.w != shape_w or crop.h != shape_h:
 			img.mat = img.mat[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]

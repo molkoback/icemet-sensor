@@ -103,6 +103,11 @@ try:
 	cameras["pylon"] = PylonCamera
 except:
 	pass
+try:
+	from icemet_sensor.hw.vimba import VimbaCamera
+	cameras["vimba"] = VimbaCamera
+except:
+	pass
 
 def create_camera(name, **kwargs):
 	if not name in cameras:

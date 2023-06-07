@@ -6,7 +6,6 @@ import numpy as np
 
 import asyncio
 import logging
-import multiprocessing as mp
 import time
 
 class SensorException(Exception):

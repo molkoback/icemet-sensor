@@ -34,7 +34,8 @@ temp_relay: {}
 
 # Upload settings
 upload: {
-url: "ftp://user:password@localhost:21/icemet"
+url: "ftp://user:password@localhost:21/icemet",
+timeout: 0
 }
 
 # Status settings

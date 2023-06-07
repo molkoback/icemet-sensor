@@ -45,7 +45,8 @@ class SensorConfig(Config):
 		if dict["temp_relay"]:
 			self.temp_relay = self._createable(dict["temp_relay"])
 		self.upload = type("UploadParam", (object,), {
-			"url": dict["upload"]["url"]
+			"url": dict["upload"]["url"],
+			"timeout": dict["upload"]["timeout"]
 		})
 		self.status = type("StatusParam", (object,), {
 			"url": dict["status"]["url"]

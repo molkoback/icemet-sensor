@@ -111,13 +111,15 @@ class Uploader:
 			
 			t = time.time()
 			try:
-				await self._proto.upload(path)
+				if self.ctx.cfg.upload.timeout > 0:
+					await asyncio.wait_for(self._proto.upload(path), self.ctx.cfg.upload.timeout)
+				else:
+					await self._proto.upload(path)
+				os.remove(path)
 			except:
 				logging.error("Upload failed")
 				await asyncio.sleep(1.0)
 				return
-			
-			await self.ctx.loop.run_in_executor(self._pool, os.remove, path)
 			logging.debug("Sent {} ({:.2f} s)".format(f.name(), time.time()-t))
 	
 	async def run(self):

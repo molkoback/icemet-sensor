@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 import asyncio
+import logging
 import os
 import random
 
@@ -88,28 +89,27 @@ class ImageReaderCamera(Camera):
 			datetime=datetime_utc()
 		)
 
-cameras = {
-	"dummy": DummyCamera,
-	"image_reader": ImageReaderCamera
-}
-try:
-	from icemet_sensor.hw.spin import SpinCamera, SpinCameraSingle
-	cameras["spin"] = SpinCamera
-	cameras["spin_single"] = SpinCameraSingle
-except:
-	pass
-try:
-	from icemet_sensor.hw.pylon import PylonCamera
-	cameras["pylon"] = PylonCamera
-except:
-	pass
-try:
-	from icemet_sensor.hw.vimba import VimbaCamera
-	cameras["vimba"] = VimbaCamera
-except:
-	pass
-
 def create_camera(name, **kwargs):
-	if not name in cameras:
+	cls = None
+	try:
+		if name == "dummy":
+			cls = DummyCamera
+		elif name == "image_reader":
+			cls = ImageReaderCamera
+		elif name == "spin":
+			from icemet_sensor.hw.spin import SpinCamera
+			cls = SpinCamera
+		elif name == "spin_single":
+			from icemet_sensor.hw.spin import SpinSingleCamera
+			cls = SpinSingleCamera
+		elif name == "pylon":
+			from icemet_sensor.hw.pylon import PylonCamera
+			cls = PylonCamera
+		elif name == "vimba":
+			from icemet_sensor.hw.vimba import VimbaCamera
+			cls = VimbaCamera
+	except:
 		raise CameraException("Camera not installed '{}'".format(name))
-	return cameras[name](**kwargs)
+	if cls is None:
+		raise CameraException("Invalid Camera '{}'".format(name))
+	return cls(**kwargs)

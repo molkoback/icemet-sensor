@@ -156,7 +156,7 @@ class SpinCamera(Camera):
 				self.cam.DeInit()
 			del self.cam
 
-class SpinCameraSingle(SpinCamera):
+class SpinSingleCamera(SpinCamera):
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 		self.cam.AcquisitionMode.SetValue(PySpin.AcquisitionMode_SingleFrame)

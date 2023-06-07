@@ -1,3 +1,5 @@
+import logging
+
 class TempRelayException(Exception):
 	pass
 
@@ -32,14 +34,16 @@ class DummyTempRelay(TempRelay):
 	async def disable(self):
 		pass
 
-temp_relays = {"dummy": DummyTempRelay}
-try:
-	from icemet_sensor.hw.xyt01 import XYT01
-	temp_relays["xyt01"] = XYT01
-except:
-	pass
-
 def create_temp_relay(name, **kwargs):
-	if not name in temp_relays:
+	cls = None
+	try:
+		if name == "dummy":
+			cls  = DummyTempRelay
+		elif name == "xyt01":
+			from icemet_sensor.hw.xyt01 import XYT01
+			cls  = XYT01
+	except:
+		raise TempRelayException("TempRelay not installed '{}'".format(name))
+	if cls is None:
 		raise TempRelayException("Invalid TempRelay '{}'".format(name))
-	return temp_relays[name](**kwargs)
+	return cls(**kwargs)

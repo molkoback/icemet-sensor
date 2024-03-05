@@ -47,9 +47,8 @@ class Url:
 		return scheme, user, password, host, port, path
 
 def datetime_utc(timestamp=None):
-	if timestamp is None:
-		return datetime.utcnow().replace(tzinfo=timezone.utc)
-	return datetime.fromtimestamp(timestamp, timezone.utc)
+	dt = datetime.utcnow() if timestamp is None else datetime.fromtimestamp(timestamp, timezone.utc)
+	return dt.replace(tzinfo=None)
 
 async def collect_garbage(quit, delay):
 	try:

@@ -1,19 +1,19 @@
-from icemet_sensor import Context, version, homedir
-from icemet_sensor.config import create_config_file, SensorConfig
+from icemet_sensor import Context, version, datadir, homedir
 from icemet_sensor.measure import Measure
 from icemet_sensor.status import Status
 from icemet_sensor.uploader import Uploader
 from icemet_sensor.util import collect_garbage
 
 import aioftp
+from icemet.cfg import Config
 
 import argparse
 import asyncio
 from datetime import datetime
 import logging
 import os
+import shutil
 import sys
-import time
 
 _version_str = """ICEMET-sensor {version}
 
@@ -71,7 +71,8 @@ def main():
 	_init_logging(logging.DEBUG if args.debug else logging.INFO)
 	
 	if args.config == _default_config_file and not os.path.exists(args.config):
-		create_config_file(args.config)
+		os.makedirs(os.path.split(args.config)[0], exist_ok=True)
+		shutil.copy(os.path.join(datadir, "icemet-sensor.yaml"), args.config)
 		logging.info("Config file created '{}'".format(args.config))
 	
 	# Create all tasks
@@ -80,9 +81,9 @@ def main():
 	for file in args.config.split(","):
 		ctx = Context()
 		ctx.args = args
-		ctx.cfg = SensorConfig(file)
+		ctx.cfg = Config(file)
 		ctx.quit = quit
-		logging.info("{} ({:02X})".format(ctx.cfg.sensor.type, ctx.cfg.sensor.id))
+		logging.info("{} ({:02X})".format(ctx.cfg["SENSOR_TYPE"], ctx.cfg["SENSOR_ID"]))
 		tasks += _create_tasks(ctx)
 	
 	# Garbage collection needed for some reason

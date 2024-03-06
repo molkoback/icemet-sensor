@@ -11,15 +11,15 @@ class Status:
 	def __init__(self, ctx, **kwargs):
 		self.ctx = ctx
 		self.delay = kwargs.get("delay", 10 * 60)
-		self._url = Url(self.ctx.cfg.status.url)
+		self._url = Url(self.ctx.cfg["STATUS_URL"])
 	
 	async def _send(self):
 		async with aiohttp.ClientSession() as session:
 			auth = aiohttp.BasicAuth(self._url.user, self._url.password)
 			form = {
-				"type": self.ctx.cfg.sensor.type,
-				"id": self.ctx.cfg.sensor.id,
-				"location": self.ctx.cfg.meas.location,
+				"type": self.ctx.cfg["SENSOR_TYPE"],
+				"id": self.ctx.cfg["SENSOR_ID"],
+				"location": self.ctx.cfg.get("MEAS_LOC", ""),
 				"time": time.time()
 			}
 			async with session.post(self._url.join(hide_auth=True), auth=auth, data=form) as resp:

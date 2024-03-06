@@ -2,52 +2,43 @@
 #
 
 # Files
-save: {
-dir: "~/.icemet/files",
-type: {"icemet": {}}
-}
+SAVE_DIR: "~/.icemet/files"
+FILE_TYPE: "icemet"
+FILE_OPT: {}
 
 # Measurement settings
-measurement: {
-location: "",
-burst_fps: 1,
-burst_len: 60,
-wait: 0,
-}
+MEAS_LOC: ""
+MEAS_FPS: 1.0
+MEAS_LEN: 60
+MEAS_WAIT: 0
 
 # Sensor settings
-sensor: {
-type: "ICEMET",
-id: "00",
-timeout: 5,
-black_th: 10
-}
+SENSOR_TYPE: "ICEMET"
+SENSOR_ID: 0x00
+SENSOR_TIMEOUT: 5
+SENSOR_OFF_TH: 10
 
-# Cameras: dummy{size,low,high}, spin{serial,params,hwclock}, pylon{params}
-camera: {"dummy": {}}
+# Camera
+CAMERA_TYPE: "dummy"
+CAMERA_OPT: {}
 
-# Lasers: dummy{}, icemet{}, myrio{saku_laser_path}, picolas{port,on_params,off_params}
-laser: {"dummy": {}}
+# Laser
+LASER_TYPE: "dummy"
+LASER_OPT: {}
 
-# TempRelays: dummy{}, xyt01{port,offset,thresh,hyst}
-temp_relay: {}
+# Temperature relay
+TEMP_RELAY_TYPE: null
+TEMP_RELAY_OPT: {}
 
 # Upload settings
-upload: {
-url: "ftp://user:password@localhost:21/icemet",
-timeout: 0
-}
+UPLOAD_URL: "ftp://user:password@localhost:21/icemet"
+UPLOAD_TIMEOUT: 0
 
 # Status settings
-status: {
-url: "http://icemet@localhost/api/status/"
-}
+STATUS_URL: "http://icemet@localhost/api/status/"
 
 # Preprocessing
-preproc: {
-enable: false,
-crop: {x: 0, y: 0, w: 2048, h: 2048},
-rotate: 0,
-empty_th: 0,
-bgsub_stack_len: 7
-}
+CROP: {x: 0, y: 0, w: 2048, h: 2048}
+ROTATE: 0
+EMPTY_TH: 0
+BGSUB_STACK_LEN: 7

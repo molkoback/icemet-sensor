@@ -16,15 +16,15 @@ class Sensor:
 		self.cfg = cfg
 		self._lsr = None
 		self._cam = None
-		self._lsr = create_laser(self.cfg.laser.name, **self.cfg.laser.kwargs)
-		self._cam = create_camera(self.cfg.camera.name, **self.cfg.camera.kwargs)
 		self._temp_relay = None
-		if not self.cfg.temp_relay is None:
-			self._temp_relay = create_temp_relay(self.cfg.temp_relay.name, **self.cfg.temp_relay.kwargs)
+		self._lsr = create_laser(self.cfg["LASER_TYPE"], **self.cfg["LASER_OPT"])
+		self._cam = create_camera(self.cfg["CAMERA_TYPE"], **self.cfg["CAMERA_OPT"])
+		if not self.cfg.get("TEMP_RELAY_TYPE", None) is None:
+			self._temp_relay = create_temp_relay(self.cfg["TEMP_RELAY_TYPE"], **self.cfg["TEMP_RELAY_OPT"])
 		self._on = False
 	
 	def _is_black(self, image):
-		th = self.cfg.sensor.black_th
+		th = self.cfg.get("SENSOR_OFF_TH", 0)
 		return th > 0 and np.mean(image) < th
 	
 	async def on(self):
@@ -45,7 +45,7 @@ class Sensor:
 	
 	async def read(self):
 		t = time.time()
-		while time.time() - t < self.cfg.sensor.timeout:
+		while time.time() - t < self.cfg.get("SENSOR_TIMEOUT", float("inf")):
 			try:
 				res = await self._cam.read()
 				if not self._is_black(res.image):

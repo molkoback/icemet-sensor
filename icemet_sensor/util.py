@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timezone
 import gc
+import uuid
 
 class Url:
 	def __init__(self, url):
@@ -57,3 +58,6 @@ async def collect_garbage(quit, delay):
 			await asyncio.sleep(delay)
 	except KeyboardInterrupt:
 		quit.set()
+
+def tmpfile():
+	return ".icemet-" + uuid.uuid4().hex

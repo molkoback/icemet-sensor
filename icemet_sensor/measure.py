@@ -1,14 +1,13 @@
 from icemet_sensor.sensor import Sensor
-from icemet_sensor.util import datetime_utc
+from icemet_sensor.util import datetime_utc, tmpfile
 
 from icemet.img import Image, BGSubStack
 from icemet.file import FileStatus
-from icemet.pkg import create_package
+from icemet.pkg import create_package, name2ext
 
 import cv2
 
 import asyncio
-import concurrent
 from datetime import datetime
 import logging
 import os
@@ -21,18 +20,19 @@ class Measure:
 	def __init__(self, ctx):
 		self.ctx = ctx
 		self.sensor = Sensor(ctx.cfg)
+		len = self.ctx.cfg.get("BGSUB_STACK_LEN", 0)
+		self._bgsub = BGSubStack(len) if len > 0 else None
+		ext = name2ext(self.ctx.cfg["FILE_TYPE"])
+		self._file_is_pkg = bool(ext)
+		self._file_ext = ext if ext else "."+self.ctx.cfg["FILE_TYPE"]
+		
 		self._time_next = 0
 		self._frame = 1
 		self._meas = 1
 		self._pkg = None
-		self._bgsub = None
-		len = self.ctx.cfg.preproc.bgsub_stack_len
-		if len > 0:
-			self._bgsub = BGSubStack(len)
-		self._pool = concurrent.futures.ThreadPoolExecutor()
 	
 	def _is_empty(self, img):
-		th = self.ctx.cfg.preproc.empty_th
+		th = self.ctx.cfg.get("EMPTY_TH", 0)
 		return th > 0 and img.dynrange() < th
 	
 	async def _show(self, img):
@@ -41,17 +41,17 @@ class Measure:
 			mat = cv2.resize(img.mat, dsize=None, fx=f, fy=f, interpolation=cv2.INTER_NEAREST)
 			cv2.imshow("ICEMET-sensor", mat)
 			cv2.waitKey(1)
-		await self.ctx.loop.run_in_executor(self._pool, func)
+		await self.ctx.loop.run_in_executor(self.ctx.pool, func)
 	
 	async def _preproc(self, img):
 		# Crop
 		shape_w, shape_h = img.mat.shape[1], img.mat.shape[0]
-		crop = self.ctx.cfg.preproc.crop
-		if crop.w != shape_w or crop.h != shape_h:
-			img.mat = img.mat[crop.y:crop.y+crop.h, crop.x:crop.x+crop.w]
+		crop = self.ctx.cfg.get("CROP", {"x": 0, "y": 0, "w": shape_w, "h": shape_h})
+		if crop["x"] != 0 or crop["y"] != 0 or crop["w"] != shape_w or crop["h"] != shape_h:
+			img.mat = img.mat[crop["y"]:crop["y"]+crop["h"], crop["x"]:crop["x"]+crop["w"]]
 		
 		# Rotate
-		rot = self.ctx.cfg.preproc.rotate
+		rot = self.ctx.cfg.get("ROTATE", 0)
 		if rot != 0:
 			img.mat = img.rotate(rot)
 		
@@ -59,11 +59,8 @@ class Measure:
 		if not self._bgsub is None:
 			if not self._bgsub.push(img):
 				return None
-			img = self._bgsub.current()
-			if img.datetime < datetime_utc(self._time_next):
+			if self._bgsub.current().datetime < datetime_utc(self._time_next):
 				return None
-			if self.ctx.args.image:
-				await self._show(img)
 			img = self._bgsub.meddiv()
 		
 		# Empty check
@@ -78,36 +75,41 @@ class Measure:
 			self._pkg.status = FileStatus.NOTEMPTY
 		self._pkg.add_img(img)
 		
-		if img.frame == self.ctx.cfg.meas.burst_len:
+		if img.frame == self.ctx.cfg["MEAS_LEN"]:
+			tmp = os.path.join(self.ctx.cfg["SAVE_DIR"], tmpfile()+self._file_ext)
+			dst = os.path.join(self.ctx.cfg["SAVE_DIR"], self._pkg.name()+self._file_ext)
+			
 			t = time.time()
-			self._pkg.save(self.ctx.cfg.save.tmp)
-			path = self._pkg.path(root=self.ctx.cfg.save.dir, ext=self.ctx.cfg.save.ext, subdirs=False)
-			os.rename(self.ctx.cfg.save.tmp, path)
+			self._pkg.save(tmp)
+			os.rename(tmp, dst)
 			logging.debug("Saved {} ({:.2f} s)".format(self._pkg.name(), time.time()-t))
 			self._pkg = None
 	
 	def _save_image(self, img):
 		if img.status == FileStatus.EMPTY:
 			return
+		
+		tmp = os.path.join(self.ctx.cfg["SAVE_DIR"], tmpfile()+self._file_ext)
+		dst = os.path.join(self.ctx.cfg["SAVE_DIR"], img.name()+self._file_ext)
+		
 		t = time.time()
-		img.save(self.ctx.cfg.save.tmp)
-		path = img.path(root=self.ctx.cfg.save.dir, ext=self.ctx.cfg.save.ext, subdirs=False)
-		os.rename(self.ctx.cfg.save.tmp, path)
+		img.save(tmp)
+		os.rename(tmp, dst)
 		logging.debug("Saved {} ({:.2f} s)".format(img.name(), time.time()-t))
 	
 	def _update_counters(self):
-		self._time_next += self.ctx.cfg.meas.burst_delay
+		self._time_next += 1.0 / self.ctx.cfg["MEAS_FPS"]
 		self._frame = self._frame + 1
-		if self._frame > self.ctx.cfg.meas.burst_len:
+		if self._frame > self.ctx.cfg["MEAS_LEN"]:
 			self._frame = 1
 			self._meas += 1
-			self._time_next += self.ctx.cfg.meas.wait
+			self._time_next += self.ctx.cfg["MEAS_WAIT"]
 	
 	async def _cycle(self):
 		# Read the newest image
 		res = await self.sensor.read()
 		img = Image(
-			sensor_id=self.ctx.cfg.sensor.id,
+			sensor_id=self.ctx.cfg["SENSOR_ID"],
 			datetime=res.datetime,
 			frame=0,
 			status=FileStatus.NOTEMPTY,
@@ -115,47 +117,44 @@ class Measure:
 		)
 		
 		# Preprocess
-		if self.ctx.cfg.preproc.enable:
-			t = time.time()
-			img = await self._preproc(img)
-			logging.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
-			if img is None:
-				return
-			img.frame = self._frame
-		else:
-			if img.datetime < datetime_utc(self._time_next):
-				return
-			if self.ctx.args.image:
-				await self._show(img)
-			img.frame = self._frame
+		t = time.time()
+		img = await self._preproc(img)
+		logging.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
+		if img is None or img.datetime < datetime_utc(self._time_next):
+			return
+		img.frame = self._frame
+		
+		# Show image
+		if self.ctx.args.image:
+			await self._show(img)
 		
 		# Create package
-		if self.ctx.cfg.save.is_pkg and self._pkg is None:
+		if self._file_is_pkg and self._pkg is None:
 			self._pkg = create_package(
-				self.ctx.cfg.save.type.name,
-				sensor_id=self.ctx.cfg.sensor.id,
+				self.ctx.cfg["FILE_TYPE"],
+				sensor_id=self.ctx.cfg["SENSOR_ID"],
 				datetime=img.datetime,
 				status=FileStatus.EMPTY,
 				len=0,
-				fps=self.ctx.cfg.meas.burst_fps,
-				**self.ctx.cfg.save.type.kwargs
+				fps=self.ctx.cfg["MEAS_FPS"],
+				**self.ctx.cfg["FILE_OPT"]
 			)
 		
 		# Save or put in the package
-		if self.ctx.cfg.save.is_pkg:
+		if self._file_is_pkg:
 			task = self._update_package
 		else:
 			task = self._save_image
-		await self.ctx.loop.run_in_executor(self._pool, task, img)
+		await self.ctx.loop.run_in_executor(self.ctx.pool, task, img)
 		logging.info("{}".format(img.name()))
 		self._update_counters()
 	
 	async def _run(self):
 		# Create path
-		if not os.path.exists(self.ctx.cfg.save.dir):
-			logging.info("Creating path '{}'".format(self.ctx.cfg.save.dir))
-			os.makedirs(self.ctx.cfg.save.dir)
-		logging.info("Save path '{}'".format(self.ctx.cfg.save.dir))
+		if not os.path.exists(self.ctx.cfg["SAVE_DIR"]):
+			logging.info("Creating path '{}'".format(self.ctx.cfg["SAVE_DIR"]))
+			os.makedirs(self.ctx.cfg["SAVE_DIR"])
+		logging.info("Save path '{}'".format(self.ctx.cfg["SAVE_DIR"]))
 		
 		# Start sensor
 		await self.sensor.on()

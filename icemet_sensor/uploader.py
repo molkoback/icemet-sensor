@@ -1,4 +1,4 @@
-from icemet_sensor.util import Url
+from icemet_sensor.util import Url, tmpfile
 
 from icemet.file import File
 
@@ -6,11 +6,9 @@ import aioftp
 import aiohttp
 
 import asyncio
-import concurrent.futures
 import logging
 import os
 import time
-import uuid
 
 class ProtocolException(Exception):
 	pass
@@ -47,7 +45,7 @@ class FTP(Protocol):
 		file = os.path.basename(path)
 		dir = self.url.path
 		dir = dir if dir.endswith("/") else dir+"/"
-		tmp = dir + ".icemet-" + uuid.uuid4().hex + os.path.splitext(file)[1]
+		tmp = dir + tmpfile() + os.path.splitext(file)[1]
 		dst = dir + file
 		
 		await self._client.upload(path, tmp, write_into=True)
@@ -84,13 +82,12 @@ def create_protocol(url):
 class Uploader:
 	def __init__(self, ctx):
 		self.ctx = ctx
-		self._proto = create_protocol(self.ctx.cfg.upload.url)
-		self._pool = concurrent.futures.ThreadPoolExecutor()
+		self._proto = create_protocol(self.ctx.cfg["UPLOAD_URL"])
 	
 	def _find_files(self):
 		files = []
-		for fn in os.listdir(self.ctx.cfg.save.dir):
-			path = os.path.join(self.ctx.cfg.save.dir, fn)
+		for fn in os.listdir(self.ctx.cfg["SAVE_DIR"]):
+			path = os.path.join(self.ctx.cfg["SAVE_DIR"], fn)
 			if os.path.isfile(path):
 				try:
 					files.append((File.frompath(fn), path))
@@ -100,7 +97,7 @@ class Uploader:
 		return files
 	
 	async def _cycle(self):
-		files = await self.ctx.loop.run_in_executor(self._pool, self._find_files)
+		files = await self.ctx.loop.run_in_executor(self.ctx.pool, self._find_files)
 		if not files:
 			await asyncio.sleep(1.0)
 			return
@@ -111,8 +108,9 @@ class Uploader:
 			
 			t = time.time()
 			try:
-				if self.ctx.cfg.upload.timeout > 0:
-					await asyncio.wait_for(self._proto.upload(path), self.ctx.cfg.upload.timeout)
+				timeout = self.ctx.cfg.get("UPLOAD_TIMEOUT", 0)
+				if timeout > 0:
+					await asyncio.wait_for(self._proto.upload(path), timeout)
 				else:
 					await self._proto.upload(path)
 				os.remove(path)

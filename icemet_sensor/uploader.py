@@ -86,8 +86,8 @@ class Uploader:
 	
 	def _find_files(self):
 		files = []
-		for fn in os.listdir(self.ctx.cfg["SAVE_DIR"]):
-			path = os.path.join(self.ctx.cfg["SAVE_DIR"], fn)
+		for fn in os.listdir(self.ctx.cfg["SAVE_PATH"]):
+			path = os.path.join(self.ctx.cfg["SAVE_PATH"], fn)
 			if os.path.isfile(path):
 				try:
 					files.append((File.frompath(fn), path))

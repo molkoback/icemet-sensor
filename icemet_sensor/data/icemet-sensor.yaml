@@ -2,7 +2,7 @@
 #
 
 # Files
-SAVE_DIR: "~/.icemet/files"
+SAVE_PATH: "~/.icemet/files"
 FILE_TYPE: "icemet"
 FILE_OPT: {}
 

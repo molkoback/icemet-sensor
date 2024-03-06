@@ -1,6 +1,7 @@
 from icemet_sensor import homedir
 from icemet_sensor.camera import create_camera
-from icemet_sensor.config import SensorConfig
+
+from icemet.cfg import Config
 
 import argparse
 import os
@@ -16,9 +17,9 @@ def _parse_args():
 
 def main():
 	args = _parse_args()
-	cfg = SensorConfig(args.cfg)
-	cfg.camera.kwargs["params"] = None
-	cam = create_camera(cfg.camera.name, **cfg.camera.kwargs)
+	cfg = Config(args.cfg)
+	cfg["CAMERA_OPT"]["params"] = None
+	cam = create_camera(cfg["CAMERA_TYPE"], **cfg["CAMERA_OPT"])
 	if args.output:
 		cam.save_params(args.output)
 		print("Parameters saved to '{}'".format(args.output))

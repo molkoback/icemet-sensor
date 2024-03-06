@@ -1,6 +1,7 @@
 from icemet_sensor import homedir
 from icemet_sensor.temp_relay import create_temp_relay
-from icemet_sensor.config import SensorConfig
+
+from icemet.cfg import Config
 
 import argparse
 import asyncio
@@ -17,8 +18,8 @@ def _parse_args():
 
 def main():
 	args = _parse_args()
-	cfg = SensorConfig(args.cfg)
-	temp_relay = create_temp_relay(cfg.temp_relay.name, **cfg.temp_relay.kwargs)
+	cfg = Config(args.cfg)
+	temp_relay = create_temp_relay(cfg["TEMP_RELAY_TYPE"], **cfg["TEMP_RELAY_OPT"])
 	async def run():
 		ret = await temp_relay.temp()
 		print("Temperature: {}°C".format(ret[0]))

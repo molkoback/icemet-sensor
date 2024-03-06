@@ -76,8 +76,8 @@ class Measure:
 		self._pkg.add_img(img)
 		
 		if img.frame == self.ctx.cfg["MEAS_LEN"]:
-			tmp = os.path.join(self.ctx.cfg["SAVE_DIR"], tmpfile()+self._file_ext)
-			dst = os.path.join(self.ctx.cfg["SAVE_DIR"], self._pkg.name()+self._file_ext)
+			tmp = os.path.join(self.ctx.cfg["SAVE_PATH"], tmpfile()+self._file_ext)
+			dst = os.path.join(self.ctx.cfg["SAVE_PATH"], self._pkg.name()+self._file_ext)
 			
 			t = time.time()
 			self._pkg.save(tmp)
@@ -89,8 +89,8 @@ class Measure:
 		if img.status == FileStatus.EMPTY:
 			return
 		
-		tmp = os.path.join(self.ctx.cfg["SAVE_DIR"], tmpfile()+self._file_ext)
-		dst = os.path.join(self.ctx.cfg["SAVE_DIR"], img.name()+self._file_ext)
+		tmp = os.path.join(self.ctx.cfg["SAVE_PATH"], tmpfile()+self._file_ext)
+		dst = os.path.join(self.ctx.cfg["SAVE_PATH"], img.name()+self._file_ext)
 		
 		t = time.time()
 		img.save(tmp)
@@ -151,10 +151,10 @@ class Measure:
 	
 	async def _run(self):
 		# Create path
-		if not os.path.exists(self.ctx.cfg["SAVE_DIR"]):
-			logging.info("Creating path '{}'".format(self.ctx.cfg["SAVE_DIR"]))
-			os.makedirs(self.ctx.cfg["SAVE_DIR"])
-		logging.info("Save path '{}'".format(self.ctx.cfg["SAVE_DIR"]))
+		if not os.path.exists(self.ctx.cfg["SAVE_PATH"]):
+			logging.info("Creating path '{}'".format(self.ctx.cfg["SAVE_PATH"]))
+			os.makedirs(self.ctx.cfg["SAVE_PATH"])
+		logging.info("Save path '{}'".format(self.ctx.cfg["SAVE_PATH"]))
 		
 		# Start sensor
 		await self.sensor.on()

@@ -1,5 +1,6 @@
-from icemet_sensor import Context, version, datadir, homedir
+from icemet_sensor import version, datadir, homedir
 from icemet_sensor.measure import Measure
+from icemet_sensor.plugins import PluginContainer
 from icemet_sensor.status import Status
 from icemet_sensor.uploader import Uploader
 from icemet_sensor.util import collect_garbage
@@ -9,6 +10,8 @@ from icemet.cfg import Config
 
 import argparse
 import asyncio
+from collections import namedtuple
+import concurrent
 from datetime import datetime
 import logging
 import os
@@ -21,6 +24,8 @@ Copyright (C) 2019-2020 Eero Molkoselkä <eero.molkoselka@gmail.com>
 """.format(version=version)
 
 _default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
+
+Context = namedtuple("Context", ["args", "cfg", "loop", "pool", "plugins", "quit"])
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")
@@ -52,6 +57,12 @@ def _init_logging(level):
 	ch.setFormatter(formatter)
 	root.addHandler(ch)
 
+def _load_plugins(cfg):
+	plugins = PluginContainer(cfg["PLUGINS_PATH"])
+	for name in cfg["PLUGINS"]:
+		plugins.load(name)
+	return plugins
+
 def _create_tasks(ctx):
 	tasks = []
 	if not ctx.args.no_images:
@@ -68,27 +79,33 @@ def main():
 		sys.stdout.write(_version_str)
 		sys.exit(0)
 	
+	# Logging
 	_init_logging(logging.DEBUG if args.debug else logging.INFO)
 	
+	# Load config
 	if args.config == _default_config_file and not os.path.exists(args.config):
 		os.makedirs(os.path.split(args.config)[0], exist_ok=True)
 		shutil.copy(os.path.join(datadir, "icemet-sensor.yaml"), args.config)
 		logging.info("Config file created '{}'".format(args.config))
 	
-	# Create all tasks
-	tasks = []
+	# Async objects
+	loop = asyncio.get_event_loop()
+	pool = concurrent.futures.ThreadPoolExecutor()
 	quit = asyncio.Event()
+	
+	# Create all instances
+	tasks = []
 	for file in args.config.split(","):
-		ctx = Context()
-		ctx.args = args
-		ctx.cfg = Config(file)
-		ctx.quit = quit
-		logging.info("{} ({:02X})".format(ctx.cfg["SENSOR_TYPE"], ctx.cfg["SENSOR_ID"]))
+		cfg = Config(file)
+		plugins = _load_plugins(cfg)
+		ctx = Context(args, cfg, loop, pool, plugins, quit)
+		plugins.call("on_init", ctx)
+		logging.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
 		tasks += _create_tasks(ctx)
 	
-	# Garbage collection needed for some reason
+	# Garbage collection needed for some cameras
 	if not args.no_images:
-		tasks.append(ctx.loop.create_task(collect_garbage(quit, 2.0)))
+		tasks.append(loop.create_task(collect_garbage(quit, 2.0)))
 	
 	# Run
 	if not tasks:
@@ -97,8 +114,8 @@ def main():
 		for task in tasks:
 			await task
 	try:
-		ctx.loop.run_until_complete(_wait())
+		loop.run_until_complete(_wait())
 		sys.exit(1)
 	except KeyboardInterrupt:
-		ctx.quit.set()
-		ctx.loop.run_until_complete(_wait())
+		quit.set()
+		loop.run_until_complete(_wait())

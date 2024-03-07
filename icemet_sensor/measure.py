@@ -124,7 +124,7 @@ class Measure:
 			return
 		img.frame = self._frame
 		
-		# Show image
+		self.ctx.plugins.call("on_image", self.ctx, img)
 		if self.ctx.args.image:
 			await self._show(img)
 		

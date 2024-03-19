@@ -4,7 +4,6 @@ import aiohttp
 
 import asyncio
 import logging
-import ssl
 import time
 
 class Status:
@@ -39,3 +38,6 @@ class Status:
 						logging.error("Failed status message")
 		except KeyboardInterrupt:
 			self.ctx.quit.set()
+
+async def on_init(ctx):
+	ctx.loop.create_task(Status(ctx).run())

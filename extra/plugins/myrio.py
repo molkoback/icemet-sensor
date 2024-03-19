@@ -1,4 +1,4 @@
-from icemet_sensor.laser import Laser
+from icemet_sensor.laser import lasers, Laser
 
 import psutil
 
@@ -27,3 +27,5 @@ class MyRIO(Laser):
 	
 	def _close(self):
 		self._kill()
+
+lasers["myrio"] = MyRIO

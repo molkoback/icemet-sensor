@@ -1,4 +1,4 @@
-from icemet_sensor.laser import Laser, LaserException
+from icemet_sensor.laser import lasers, Laser, LaserException
 
 import serial
 
@@ -77,3 +77,5 @@ class PicoLAS(Laser):
 	def _close(self):
 		if not self._ser is None:
 			self._ser.close()
+
+lasers["picolas"] = PicoLAS

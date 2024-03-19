@@ -1,4 +1,4 @@
-from icemet_sensor.camera import CameraResult, Camera, CameraException
+from icemet_sensor.camera import cameras, CameraResult, Camera, CameraException
 from icemet_sensor.util import datetime_utc
 
 import numpy as np
@@ -184,3 +184,6 @@ class SpinSingleCamera(SpinCamera):
 		if res is None:
 			raise CameraException("SpinCamera failed")
 		return res
+
+cameras["spin"] = SpinCamera
+cameras["spin_single"] = SpinSingleCamera

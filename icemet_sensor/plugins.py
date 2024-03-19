@@ -18,6 +18,6 @@ class PluginContainer:
 				self._plugins[func_name].append(getattr(module, func_name))
 		logging.debug("Plugin '{}' with {} hooks".format(name, count))
 	
-	def call(self, name, *args, **kwargs):
+	async def call(self, name, *args, **kwargs):
 		for func in self._plugins.get(name, []):
-			func(*args, **kwargs)
+			await func(*args, **kwargs)

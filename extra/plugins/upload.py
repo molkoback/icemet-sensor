@@ -130,3 +130,6 @@ class Uploader:
 		except Exception as e:
 			logging.error(str(e))
 		self.ctx.quit.set()
+
+async def on_init(ctx):
+	ctx.loop.create_task(Uploader(ctx).run())

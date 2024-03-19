@@ -1,4 +1,4 @@
-from icemet_sensor.camera import CameraResult, Camera, CameraException
+from icemet_sensor.camera import cameras, CameraResult, Camera, CameraException
 from icemet_sensor.util import datetime_utc
 
 from pypylon import pylon
@@ -54,3 +54,5 @@ class PylonCamera(Camera):
 	
 	def _close(self):
 		self.cam.Close()
+
+cameras["pylon"] = PylonCamera

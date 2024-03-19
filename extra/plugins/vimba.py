@@ -1,4 +1,4 @@
-from icemet_sensor.camera import CameraResult, Camera, CameraException
+from icemet_sensor.camera import cameras, CameraResult, Camera, CameraException
 from icemet_sensor.util import datetime_utc
 
 import vimba
@@ -97,3 +97,5 @@ class VimbaCamera(Camera):
 		with self.ctx:
 			with self.cam:
 				self.cam.load_settings(fn, vimba.PersistType.NoLUT)
+
+cameras["vimba"] = VimbaCamera

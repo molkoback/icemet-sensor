@@ -1,4 +1,4 @@
-from icemet_sensor.laser import Laser
+from icemet_sensor.laser import lasers, Laser
 
 class ICEMETLaser(Laser):
 	def __init__(self):
@@ -12,3 +12,5 @@ class ICEMETLaser(Laser):
 	
 	def close(self):
 		pass
+
+lasers["icemet"] = ICEMETLaser

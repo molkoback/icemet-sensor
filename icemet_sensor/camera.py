@@ -89,27 +89,13 @@ class ImageReaderCamera(Camera):
 			datetime=datetime_utc()
 		)
 
+cameras = {
+	"dummy": DummyCamera,
+	"image_reader": ImageReaderCamera
+}
+
 def create_camera(name, **kwargs):
-	cls = None
-	try:
-		if name == "dummy":
-			cls = DummyCamera
-		elif name == "image_reader":
-			cls = ImageReaderCamera
-		elif name == "spin":
-			from icemet_sensor.hw.spin import SpinCamera
-			cls = SpinCamera
-		elif name == "spin_single":
-			from icemet_sensor.hw.spin import SpinSingleCamera
-			cls = SpinSingleCamera
-		elif name == "pylon":
-			from icemet_sensor.hw.pylon import PylonCamera
-			cls = PylonCamera
-		elif name == "vimba":
-			from icemet_sensor.hw.vimba import VimbaCamera
-			cls = VimbaCamera
-	except:
-		raise CameraException("Camera not installed '{}'".format(name))
+	cls = cameras.get(name, None)
 	if cls is None:
-		raise CameraException("Invalid Camera '{}'".format(name))
+		raise CameraException("Camera not installed '{}'".format(name))
 	return cls(**kwargs)

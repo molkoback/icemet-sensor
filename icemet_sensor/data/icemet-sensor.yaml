@@ -1,6 +1,10 @@
 # ICEMET Sensor config
 #
 
+# Plugins
+PLUGINS_PATH: "~/.icemet/plugins"
+PLUGINS: []
+
 # Files
 SAVE_PATH: "~/.icemet/files"
 FILE_TYPE: "icemet"
@@ -42,7 +46,3 @@ CROP: {x: 0, y: 0, w: 2048, h: 2048}
 ROTATE: 0
 EMPTY_TH: 0
 BGSUB_STACK_LEN: 7
-
-# Plugins
-PLUGINS_PATH: "~/.icemet/plugins"
-PLUGINS: []

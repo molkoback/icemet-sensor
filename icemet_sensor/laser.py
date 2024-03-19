@@ -28,22 +28,12 @@ class DummyLaser(Laser):
 	async def off(self):
 		pass
 
+lasers = {
+	"dummy": DummyLaser
+}
+
 def create_laser(name, **kwargs):
-	cls = None
-	try:
-		if name == "dummy":
-			cls = DummyLaser
-		elif name == "icemet":
-			from icemet_sensor.hw.icemet_laser import ICEMETLaser
-			cls = ICEMETLaser
-		elif name == "myrio":
-			from icemet_sensor.hw.myrio import MyRIO
-			cls = MyRIO
-		elif name == "picolas":
-			from icemet_sensor.hw.picolas import PicoLAS
-			cls = PicoLAS
-	except:
-		raise LaserException("Laser not installed '{}'".format(name))
+	cls = lasers.get(name, None)
 	if cls is None:
-		raise LaserException("Invalid Laser '{}'".format(name))
+		raise LaserException("Laser not installed '{}'".format(name))
 	return cls(**kwargs)

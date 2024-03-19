@@ -1,4 +1,4 @@
-from icemet_sensor.temp_relay import TempRelay, TempRelayException
+from icemet_sensor.temp_relay import temp_relays, TempRelay, TempRelayException
 
 import serial
 
@@ -87,3 +87,5 @@ class XYT01(TempRelay):
 	
 	def _close(self):
 		self._ser.close()
+
+temp_relays["xyt01"] = XYT01

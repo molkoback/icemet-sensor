@@ -34,16 +34,12 @@ class DummyTempRelay(TempRelay):
 	async def disable(self):
 		pass
 
+temp_relays = {
+	"dummy": DummyTempRelay
+}
+
 def create_temp_relay(name, **kwargs):
-	cls = None
-	try:
-		if name == "dummy":
-			cls  = DummyTempRelay
-		elif name == "xyt01":
-			from icemet_sensor.hw.xyt01 import XYT01
-			cls  = XYT01
-	except:
-		raise TempRelayException("TempRelay not installed '{}'".format(name))
+	cls = temp_relays.get(name, None)
 	if cls is None:
-		raise TempRelayException("Invalid TempRelay '{}'".format(name))
+		raise TempRelayException("TempRelay not installed '{}'".format(name))
 	return cls(**kwargs)

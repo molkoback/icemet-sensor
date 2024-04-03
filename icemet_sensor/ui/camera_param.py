@@ -1,5 +1,6 @@
 from icemet_sensor import homedir
 from icemet_sensor.camera import create_camera
+from icemet_sensor.plugins import PluginContainer
 
 from icemet.cfg import Config
 
@@ -18,8 +19,13 @@ def _parse_args():
 def main():
 	args = _parse_args()
 	cfg = Config(args.cfg)
-	cfg["CAMERA_OPT"]["params"] = None
+	plugins = PluginContainer(cfg["PLUGINS_PATH"])
+	for name in cfg["PLUGINS"]:
+		plugins.load(name)
+	if "params" in cfg["CAMERA_OPT"]:
+		cfg["CAMERA_OPT"]["params"] = None
 	cam = create_camera(cfg["CAMERA_TYPE"], **cfg["CAMERA_OPT"])
+	
 	if args.output:
 		cam.save_params(args.output)
 		print("Parameters saved to '{}'".format(args.output))

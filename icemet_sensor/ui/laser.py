@@ -1,5 +1,6 @@
 from icemet_sensor import homedir
 from icemet_sensor.laser import create_laser
+from icemet_sensor.plugins import PluginContainer
 
 from icemet.cfg import Config
 
@@ -14,6 +15,9 @@ def _create():
 	parser.add_argument("cfg", nargs="?", default=_default_config_file, help="config file", metavar="str")
 	args = parser.parse_args()
 	cfg = Config(args.cfg)
+	plugins = PluginContainer(cfg["PLUGINS_PATH"])
+	for name in cfg["PLUGINS"]:
+		plugins.load(name)
 	return create_laser(cfg["LASER_TYPE"], **cfg["LASER_OPT"])
 
 def laser_on_main():

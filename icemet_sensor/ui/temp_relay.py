@@ -1,4 +1,5 @@
 from icemet_sensor import homedir
+from icemet_sensor.plugins import PluginContainer
 from icemet_sensor.temp_relay import create_temp_relay
 
 from icemet.cfg import Config
@@ -19,6 +20,9 @@ def _parse_args():
 def main():
 	args = _parse_args()
 	cfg = Config(args.cfg)
+	plugins = PluginContainer(cfg["PLUGINS_PATH"])
+	for name in cfg["PLUGINS"]:
+		plugins.load(name)
 	temp_relay = create_temp_relay(cfg["TEMP_RELAY_TYPE"], **cfg["TEMP_RELAY_OPT"])
 	async def run():
 		ret = await temp_relay.temp()

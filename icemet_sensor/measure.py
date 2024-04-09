@@ -1,7 +1,7 @@
 from icemet_sensor.sensor import Sensor
 from icemet_sensor.util import datetime_utc
 
-from icemet.img import Image, BGSubStack
+from icemet.img import Image, BGSubStack, CombineStack
 from icemet.file import FileStatus
 
 import cv2
@@ -18,8 +18,11 @@ class Measure:
 	def __init__(self, ctx):
 		self.ctx = ctx
 		self.sensor = Sensor(self.ctx.cfg)
-		len = self.ctx.cfg.get("BGSUB_STACK_LEN", 0)
-		self._bgsub = BGSubStack(len) if len > 0 else None
+		bgsub_len = self.ctx.cfg.get("BGSUB_STACK_LEN", 0)
+		bgsub_use_middle = self.ctx.cfg.get("BGSUB_STACK_USE_MIDDLE", True)
+		self._bgsub = BGSubStack(bgsub_len, bgsub_use_middle) if bgsub_len > 0 else None
+		self._combine_len = self.ctx.cfg.get("COMBINE_STACK_LEN", 0)
+		self._combine = None
 		
 		self._time_next = 0
 		self._frame = 1
@@ -49,6 +52,15 @@ class Measure:
 				return None
 			img = self._bgsub.meddiv()
 		
+			# Combine images
+			if self._combine_len > 1:
+				if self._combine is None:
+					self._combine = CombineStack(self._combine_len)
+				if not self._combine.push(img):
+					return None
+				img = self._combine.combine()
+				self._combine = None
+		
 		# Empty check
 		if self._is_empty(img):
 			img.status = FileStatus.EMPTY
@@ -70,7 +82,8 @@ class Measure:
 			datetime=res.datetime,
 			frame=0,
 			status=FileStatus.NOTEMPTY,
-			mat=res.image
+			mat=res.image,
+			params=res.params
 		)
 		
 		# Preprocess

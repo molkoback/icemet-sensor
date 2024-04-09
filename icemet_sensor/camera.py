@@ -15,6 +15,7 @@ class CameraResult:
 	def __init__(self, **kwargs):
 		self.image = kwargs.get("image", None)
 		self.datetime = kwargs.get("datetime", None)
+		self.params = kwargs.get("params", {})
 
 class Camera:
 	async def start(self) -> None:

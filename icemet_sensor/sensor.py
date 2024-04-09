@@ -23,9 +23,12 @@ class Sensor:
 			self._temp_relay = create_temp_relay(self.cfg["TEMP_RELAY_TYPE"], **self.cfg["TEMP_RELAY_OPT"])
 		self._on = False
 	
-	def _is_black(self, image):
+	def _is_black(self, res):
 		th = self.cfg.get("SENSOR_OFF_TH", 0)
-		return th > 0 and np.mean(image) < th
+		if th > 0:
+			res.params["mean"] = np.mean(res.image)
+			return res.params["mean"] < th
+		return False
 	
 	async def on(self):
 		if not self._on:
@@ -48,7 +51,7 @@ class Sensor:
 		while time.time() - t < self.cfg.get("SENSOR_TIMEOUT", float("inf")):
 			try:
 				res = await self._cam.read()
-				if not self._is_black(res.image):
+				if not self._is_black(res):
 					logging.debug("Image read ({:.2f} s)".format(time.time()-t))
 					return res
 			except CameraException as e:

@@ -86,7 +86,8 @@ def main():
 		ctx = Context(args, cfg, loop, pool, plugins, quit)
 		logging.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
 		
-		ctx.loop.create_task(Measure(ctx).run())
+		if not args.no_images:
+			ctx.loop.create_task(Measure(ctx).run())
 		ctx.loop.create_task(plugins.call("on_init", ctx))
 	
 	# Garbage collection needed for some cameras

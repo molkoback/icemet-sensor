@@ -17,7 +17,7 @@ import sys
 
 _version_str = """ICEMET-sensor {version}
 
-Copyright (C) 2019-2020 Eero Molkoselkä <eero.molkoselka@gmail.com>
+Copyright (C) 2019-2025 Eero Molkoselkä <eero.molkoselka@gmail.com>
 """.format(version=version)
 
 _default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
@@ -85,10 +85,10 @@ def main():
 		
 		ctx = Context(args, cfg, loop, pool, plugins, quit)
 		logging.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
+		loop.run_until_complete(plugins.call("on_init", ctx))
 		
 		if not args.no_images:
 			ctx.loop.create_task(Measure(ctx).run())
-		ctx.loop.create_task(plugins.call("on_init", ctx))
 	
 	# Garbage collection needed for some cameras
 	if not args.no_images:

@@ -1,5 +1,6 @@
+from icemet_sensor.util import logger
+
 import importlib
-import logging
 import os
 
 class PluginContainer:
@@ -21,7 +22,7 @@ class PluginContainer:
 					self._plugins[func_name] = []
 				self._plugins[func_name].append(getattr(module, func_name))
 		
-		logging.debug("Plugin '{}' with {} hooks".format(name, count))
+		logger.debug("Plugin '{}' with {} hooks".format(name, count))
 	
 	async def call(self, name, *args, **kwargs):
 		for func in self._plugins.get(name, []):

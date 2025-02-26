@@ -1,5 +1,5 @@
 from icemet_sensor.sensor import Sensor
-from icemet_sensor.util import datetime_utc
+from icemet_sensor.util import datetime_utc, logger
 
 from icemet.img import Image, BGSubStack, CombineStack
 from icemet.file import FileStatus
@@ -8,7 +8,6 @@ import cv2
 
 import asyncio
 from datetime import datetime
-import logging
 import time
 
 class MeasureException(Exception):
@@ -89,13 +88,13 @@ class Measure:
 		# Preprocess
 		t = time.time()
 		img = await self._preproc(img)
-		logging.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
+		logger.debug("Preprocessed ({:.2f} s)".format(time.time()-t))
 		if img is None or img.datetime < datetime_utc(self._time_next):
 			return
 		img.frame = self._frame
 		
 		await self.ctx.plugins.call("on_image", self.ctx, img)
-		logging.info("{}".format(img.name()))
+		logger.info("{}".format(img.name()))
 		self._update_counters()
 	
 	async def _run(self):
@@ -115,7 +114,7 @@ class Measure:
 		else:
 			self._time_next = now // 60 * 60 + 60
 		dt = datetime.fromtimestamp(self._time_next)
-		logging.info("Start time {}".format(dt.strftime("%Y-%m-%d %H:%M:%S")))
+		logger.info("Start time {}".format(dt.strftime("%Y-%m-%d %H:%M:%S")))
 		
 		# Run measurements
 		while not self.ctx.quit.is_set():
@@ -127,7 +126,7 @@ class Measure:
 		except KeyboardInterrupt:
 			pass
 		except Exception as e:
-			logging.error(str(e))
+			logger.error(str(e))
 		self._pkg = None
 		await self.sensor.off()
 		self.sensor.close()

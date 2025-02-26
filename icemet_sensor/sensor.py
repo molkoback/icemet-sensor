@@ -1,11 +1,11 @@
 from icemet_sensor.camera import create_camera, CameraException
 from icemet_sensor.laser import create_laser
 from icemet_sensor.temp_relay import create_temp_relay
+from icemet_sensor.util import logger
 
 import numpy as np
 
 import asyncio
-import logging
 import time
 
 class SensorException(Exception):
@@ -37,14 +37,14 @@ class Sensor:
 			if not self._temp_relay is None:
 				await self._temp_relay.enable()
 			self._on = True
-		logging.debug("Sensor ON")
+		logger.debug("Sensor ON")
 	
 	async def off(self):
 		if self._on:
 			await self._cam.stop()
 			await self._lsr.off()
 			self._on = False
-		logging.debug("Sensor OFF")
+		logger.debug("Sensor OFF")
 	
 	async def read(self):
 		t = time.time()
@@ -52,7 +52,7 @@ class Sensor:
 			try:
 				res = await self._cam.read()
 				if not self._is_black(res):
-					logging.debug("Image read ({:.2f} s)".format(time.time()-t))
+					logger.debug("Image read ({:.2f} s)".format(time.time()-t))
 					return res
 			except CameraException as e:
 				self._on = False

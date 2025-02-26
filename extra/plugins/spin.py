@@ -9,7 +9,6 @@ import atexit
 import collections
 import concurrent.futures
 import json
-import logging
 import time
 
 _system = PySpin.System.GetInstance()

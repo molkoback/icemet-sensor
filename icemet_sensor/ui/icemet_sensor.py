@@ -1,9 +1,8 @@
 from icemet_sensor import version, datadir, homedir, Context
 from icemet_sensor.measure import Measure
 from icemet_sensor.plugins import PluginContainer
-from icemet_sensor.util import collect_garbage
+from icemet_sensor.util import logger, collect_garbage
 
-import aioftp
 from icemet.cfg import Config
 
 import argparse
@@ -34,17 +33,17 @@ def _parse_args():
 	parser.add_argument("-V", "--version", action="store_true", help="print version information")
 	return parser.parse_args()
 
-def _init_logging(level):
-	root = logging.getLogger()
+def _init_logger(level):
+	if level == logging.DEBUG:
+		root = logging.getLogger()
+		fmt = "[%(asctime)s]<%(module)s:%(lineno)d>(%(levelname)s) %(message)s"
+	else:
+		root = logger
+		fmt = "[%(asctime)s](%(levelname)s) %(message)s"
+	
 	root.setLevel(level)
 	ch = logging.StreamHandler(sys.stdout)
 	ch.setLevel(level)
-	if level == logging.DEBUG:
-		fmt = "[%(asctime)s]<%(module)s:%(lineno)d>(%(levelname)s) %(message)s"
-		aioftp.client.logger.setLevel(logging.DEBUG)
-	else:
-		fmt = "[%(asctime)s](%(levelname)s) %(message)s"
-		aioftp.client.logger.setLevel(logging.ERROR)
 	formatter = logging.Formatter(fmt, datefmt="%H:%M:%S")
 	ch.setFormatter(formatter)
 	root.addHandler(ch)
@@ -62,13 +61,13 @@ def main():
 		sys.exit(0)
 	
 	# Logging
-	_init_logging(logging.DEBUG if args.debug else logging.INFO)
+	_init_logger(logging.DEBUG if args.debug else logging.INFO)
 	
 	# Load config
 	if args.config == _default_config_file and not os.path.exists(args.config):
 		os.makedirs(os.path.split(args.config)[0], exist_ok=True)
 		shutil.copy(os.path.join(datadir, "icemet-sensor.yaml"), args.config)
-		logging.info("Config file created '{}'".format(args.config))
+		logger.info("Config file created '{}'".format(args.config))
 	
 	# Async objects
 	loop = asyncio.get_event_loop()
@@ -84,7 +83,7 @@ def main():
 			plugins.load(name)
 		
 		ctx = Context(args, cfg, loop, pool, plugins, quit)
-		logging.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
+		logger.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
 		loop.run_until_complete(plugins.call("on_init", ctx))
 		
 		if not args.no_images:

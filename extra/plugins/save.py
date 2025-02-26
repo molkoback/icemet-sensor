@@ -1,9 +1,8 @@
-from icemet_sensor.util import tmpfile
+from icemet_sensor.util import tmpfile, logger
 
 from icemet.file import FileStatus
 from icemet.pkg import create_package, name2ext
 
-import logging
 import os
 import time
 
@@ -19,9 +18,9 @@ class Saver:
 		self._pkg = None
 		
 		if not os.path.exists(self.ctx.cfg["SAVE_PATH"]):
-			logging.info("Creating path '{}'".format(self.ctx.cfg["SAVE_PATH"]))
+			logger.info("Creating path '{}'".format(self.ctx.cfg["SAVE_PATH"]))
 			os.makedirs(self.ctx.cfg["SAVE_PATH"])
-		logging.info("Save path '{}'".format(self.ctx.cfg["SAVE_PATH"]))
+		logger.info("Save path '{}'".format(self.ctx.cfg["SAVE_PATH"]))
 	
 	def _update_package(self, img):
 		self._pkg.len += 1
@@ -37,7 +36,7 @@ class Saver:
 			t = time.time()
 			self._pkg.save(tmp)
 			os.rename(tmp, dst)
-			logging.debug("Saved {} ({:.2f} s)".format(self._pkg.name(), time.time()-t))
+			logger.debug("Saved {} ({:.2f} s)".format(self._pkg.name(), time.time()-t))
 			self._pkg = None
 	
 	def _save_image(self, img):
@@ -50,7 +49,7 @@ class Saver:
 		t = time.time()
 		img.save(tmp)
 		os.rename(tmp, dst)
-		logging.debug("Saved {} ({:.2f} s)".format(img.name(), time.time()-t))
+		logger.debug("Saved {} ({:.2f} s)".format(img.name(), time.time()-t))
 	
 	async def process(self, img):
 		if self._file_is_pkg and self._pkg is None:

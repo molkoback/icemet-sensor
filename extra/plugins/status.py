@@ -1,9 +1,8 @@
-from icemet_sensor.util import Url
+from icemet_sensor.util import logger, Url
 
 import aiohttp
 
 import asyncio
-import logging
 import time
 
 class Status:
@@ -23,7 +22,7 @@ class Status:
 			}
 			async with session.post(self._url.join(hide_auth=True), auth=auth, data=form) as resp:
 				delay = (await resp.json())["delay"]
-				logging.debug("Status message sent ({:.2f} s)".format(delay))
+				logger.debug("Status message sent ({:.2f} s)".format(delay))
 	
 	async def run(self):
 		try:
@@ -35,7 +34,7 @@ class Status:
 						await self._send()
 						last = time.time()
 					except:
-						logging.error("Failed status message")
+						logger.error("Failed status message")
 		except KeyboardInterrupt:
 			self.ctx.quit.set()
 

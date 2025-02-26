@@ -1,10 +1,9 @@
-from icemet_sensor.util import datetime_utc
+from icemet_sensor.util import datetime_utc, logger
 
 import cv2
 import numpy as np
 
 import asyncio
-import logging
 import os
 import random
 
@@ -42,7 +41,7 @@ class Camera:
 		except NotImplementedError:
 			pass
 		except:
-			logging.debug("Failed to close Camera")
+			logger.debug("Failed to close Camera")
 
 class DummyCamera(Camera):
 	def __init__(self, size=(640, 480), low=0, high=255):

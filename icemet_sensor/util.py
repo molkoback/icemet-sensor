@@ -1,7 +1,10 @@
 import asyncio
 from datetime import datetime, timezone
 import gc
+import logging
 import uuid
+
+logger = logging.getLogger("icemet_sensor")
 
 class Url:
 	def __init__(self, url):

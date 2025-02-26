@@ -1,4 +1,4 @@
-import logging
+from icemet_sensor.util import logger
 
 class LaserException(Exception):
 	pass
@@ -19,7 +19,7 @@ class Laser:
 		except NotImplementedError:
 			pass
 		except:
-			logging.debug("Failed to close Laser")
+			logger.debug("Failed to close Laser")
 
 class DummyLaser(Laser):
 	async def on(self):

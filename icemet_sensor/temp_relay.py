@@ -1,4 +1,4 @@
-import logging
+from icemet_sensor.util import logger
 
 class TempRelayException(Exception):
 	pass
@@ -22,7 +22,7 @@ class TempRelay:
 		except NotImplementedError:
 			pass
 		except:
-			logging.debug("Failed to close TempRelay")
+			logger.debug("Failed to close TempRelay")
 
 class DummyTempRelay(TempRelay):
 	async def temp(self):

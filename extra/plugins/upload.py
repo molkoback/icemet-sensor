@@ -1,4 +1,4 @@
-from icemet_sensor.util import Url, tmpfile
+from icemet_sensor.util import logger, Url, tmpfile
 
 from icemet.file import File
 
@@ -6,7 +6,6 @@ import aioftp
 import aiohttp
 
 import asyncio
-import logging
 import os
 import time
 
@@ -115,20 +114,20 @@ class Uploader:
 					await self._proto.upload(path)
 				os.remove(path)
 			except:
-				logging.error("Upload failed")
+				logger.error("Upload failed")
 				await asyncio.sleep(1.0)
 				return
-			logging.debug("Sent {} ({:.2f} s)".format(f.name(), time.time()-t))
+			logger.debug("Sent {} ({:.2f} s)".format(f.name(), time.time()-t))
 	
 	async def run(self):
-		logging.info("Upload {}".format(self._proto.url.join(hide_auth=True)))
+		logger.info("Upload {}".format(self._proto.url.join(hide_auth=True)))
 		try:
 			while not self.ctx.quit.is_set():
 				await self._cycle()
 		except KeyboardInterrupt:
 			pass
 		except Exception as e:
-			logging.error(str(e))
+			logger.error(str(e))
 		self.ctx.quit.set()
 
 async def on_init(ctx):

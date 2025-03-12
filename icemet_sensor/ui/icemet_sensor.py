@@ -1,4 +1,4 @@
-from icemet_sensor import version, datadir, homedir, Context
+from icemet_sensor import version, data_path, home_path, plugins_path, Context
 from icemet_sensor.measure import Measure
 from icemet_sensor.plugins import PluginContainer
 from icemet_sensor.util import logger, collect_garbage
@@ -8,7 +8,6 @@ from icemet.cfg import Config
 import argparse
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 import logging
 import os
 import shutil
@@ -19,7 +18,7 @@ _version_str = """ICEMET-sensor {version}
 Copyright (C) 2019-2025 Eero Molkoselkä <eero.molkoselka@gmail.com>
 """.format(version=version)
 
-_default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
+_default_config_file = os.path.join(home_path, "icemet-sensor.yaml")
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")
@@ -58,7 +57,7 @@ def main():
 	args = _parse_args()
 	if args.version:
 		sys.stdout.write(_version_str)
-		sys.exit(0)
+		return 0
 	
 	# Logging
 	_init_logger(logging.DEBUG if args.debug else logging.INFO)
@@ -66,7 +65,7 @@ def main():
 	# Load config
 	if args.config == _default_config_file and not os.path.exists(args.config):
 		os.makedirs(os.path.split(args.config)[0], exist_ok=True)
-		shutil.copy(os.path.join(datadir, "icemet-sensor.yaml"), args.config)
+		shutil.copy(os.path.join(data_path, "icemet-sensor.yaml"), args.config)
 		logger.info("Config file created '{}'".format(args.config))
 	
 	# Async objects
@@ -78,10 +77,15 @@ def main():
 	for file in args.config.split(","):
 		cfg = Config(file)
 		
-		plugins = PluginContainer(cfg["PLUGINS_PATH"])
+		# Load plugins
+		plugins_paths = cfg.get("PLUGINS_PATHS", []) + [plugins_path]
+		logger.debug("Plugins paths: {}".format(", ".join(plugins_paths)))
+		plugins = PluginContainer(plugins_paths)
 		for name in cfg["PLUGINS"]:
-			plugins.load(name)
+			hooks = plugins.load(name)
+			logger.debug("Plugin '{}' with {} hooks".format(name, hooks))
 		
+		# Create context
 		ctx = Context(args, cfg, loop, pool, plugins, quit)
 		logger.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
 		loop.run_until_complete(plugins.call("on_init", ctx))
@@ -96,7 +100,8 @@ def main():
 	# Run
 	try:
 		loop.run_until_complete(_collect())
-		sys.exit(1)
+		return 1
 	except KeyboardInterrupt:
 		quit.set()
 		loop.run_until_complete(_collect())
+	return 0

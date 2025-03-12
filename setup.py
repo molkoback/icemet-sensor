@@ -12,17 +12,9 @@ setup(
 	name="icemet-sensor",
 	version=version,
 	packages=find_packages(),
-	
 	install_requires=requirements,
-	extras_require={
-		"myrio": ["psutil>=5.7.2"],
-		"picolas": ["pyserial>=3.4"],
-		"pylon": ["pypylon>=1.5.1"],
-		"spin": ["spinnaker-python>=1.20.0.14"],
-		"xyt01": ["pyserial>=3.4"]
-	},
 	
-	package_data={"icemet_sensor": ["data/*"]},
+	package_data={"icemet_sensor": ["data/*", "plugins/*"]},
 	
 	author="Eero Molkoselkä",
 	author_email="eero.molkoselka@gmail.com",
@@ -45,8 +37,6 @@ setup(
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",
 		"Programming Language :: Python :: 3",
-		"Programming Language :: Python :: 3.7",
-		"Topic :: Internet :: File Transfer Protocol (FTP)",
 		"Topic :: Scientific/Engineering :: Atmospheric Science",
 		"Topic :: Software Development :: Embedded Systems"
 	]

@@ -2,7 +2,7 @@
 #
 
 # Plugins
-PLUGINS_PATH: "~/.icemet/plugins"
+PLUGINS_PATHS: ["~/.icemet/plugins"]
 PLUGINS: []
 
 # Files

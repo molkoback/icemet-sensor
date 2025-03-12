@@ -1,15 +1,22 @@
-from icemet_sensor.util import logger
-
 import importlib
 import os
 
 class PluginContainer:
-	def __init__(self, plugins_path):
-		self.plugins_path = plugins_path
+	def __init__(self, plugins_paths):
+		self._plugins_available = {}
+		for path in plugins_paths:
+			for file in os.listdir(path):
+				name, ext = os.path.splitext(file)
+				if ext == ".py" and not name in self._plugins_available:
+					self._plugins_available[name] = os.path.join(path, file)
+		
 		self._plugins = {}
 	
+	def plugins_available(self):
+		return list(self._plugins_available.keys())
+	
 	def load(self, name):
-		path = os.path.join(self.plugins_path, name+".py")
+		path = self._plugins_available[name]
 		spec = importlib.util.spec_from_file_location(name, path)
 		module = importlib.util.module_from_spec(spec)
 		spec.loader.exec_module(module)
@@ -22,7 +29,7 @@ class PluginContainer:
 					self._plugins[func_name] = []
 				self._plugins[func_name].append(getattr(module, func_name))
 		
-		logger.debug("Plugin '{}' with {} hooks".format(name, count))
+		return count
 	
 	async def call(self, name, *args, **kwargs):
 		for func in self._plugins.get(name, []):

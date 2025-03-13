@@ -1,0 +1,38 @@
+[project]
+name = "icemet-sensor"
+version = "1.9.0.dev"
+description = "Measurement software for ICEMET type sensors."
+authors = [
+	{name = "Eero Molkoselkä", email = "eero.molkoselka@gmail.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+	"icemet-python (>1.8.0)"
+]
+dynamic = ["classifiers"]
+
+[project.optional-dependencies]
+http = ["aiohttp"]
+ftp = ["aioftp"]
+
+[project.scripts]
+icemet-sensor = "icemet_sensor.ui.icemet_sensor:main"
+icemet-camera-param = "icemet_sensor.ui.camera_param:main"
+icemet-laser-on = "icemet_sensor.ui.laser:laser_on_main"
+icemet-laser-off = "icemet_sensor.ui.laser:laser_off_main"
+icemet-temp-relay = "icemet_sensor.ui.temp_relay:main"
+
+[project.urls]
+repository = "https://github.com/molkoback/icemet-sensor"
+
+[tool.poetry]
+packages = [{include = "icemet_sensor"}]
+classifiers = [
+	"Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

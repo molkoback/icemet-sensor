@@ -1,4 +1,4 @@
-from icemet_sensor import homedir
+from icemet_sensor import home_path, plugins_path
 from icemet_sensor.plugins import PluginContainer
 from icemet_sensor.temp_relay import create_temp_relay
 
@@ -8,7 +8,7 @@ import argparse
 import asyncio
 import os
 
-_default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
+_default_config_file = os.path.join(home_path, "icemet-sensor.yaml")
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor temperature relay parameter utility")
@@ -20,9 +20,12 @@ def _parse_args():
 def main():
 	args = _parse_args()
 	cfg = Config(args.cfg)
-	plugins = PluginContainer(cfg["PLUGINS_PATH"])
+	
+	plugins_paths = cfg.get("PLUGINS_PATHS", []) + [plugins_path]
+	plugins = PluginContainer(cfg["PLUGINS_PATHS"])
 	for name in cfg["PLUGINS"]:
 		plugins.load(name)
+	
 	temp_relay = create_temp_relay(cfg["TEMP_RELAY_TYPE"], **cfg["TEMP_RELAY_OPT"])
 	async def run():
 		ret = await temp_relay.temp()

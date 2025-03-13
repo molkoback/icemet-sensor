@@ -1,4 +1,4 @@
-from icemet_sensor import homedir
+from icemet_sensor import home_path, plugins_path
 from icemet_sensor.camera import create_camera
 from icemet_sensor.plugins import PluginContainer
 
@@ -7,7 +7,7 @@ from icemet.cfg import Config
 import argparse
 import os
 
-_default_config_file = os.path.join(homedir, "icemet-sensor.yaml")
+_default_config_file = os.path.join(home_path, "icemet-sensor.yaml")
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor camera parameter utility")
@@ -19,9 +19,12 @@ def _parse_args():
 def main():
 	args = _parse_args()
 	cfg = Config(args.cfg)
-	plugins = PluginContainer(cfg["PLUGINS_PATH"])
+	
+	plugins_paths = cfg.get("PLUGINS_PATHS", []) + [plugins_path]
+	plugins = PluginContainer(cfg["PLUGINS_PATHS"])
 	for name in cfg["PLUGINS"]:
 		plugins.load(name)
+	
 	if "params" in cfg["CAMERA_OPT"]:
 		cfg["CAMERA_OPT"]["params"] = None
 	cam = create_camera(cfg["CAMERA_TYPE"], **cfg["CAMERA_OPT"])

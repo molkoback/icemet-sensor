@@ -1,7 +1,7 @@
 from icemet_sensor import version, data_path, home_path, plugins_path, Context
 from icemet_sensor.measure import Measure
 from icemet_sensor.plugins import PluginContainer
-from icemet_sensor.util import logger, collect_garbage
+from icemet_sensor.util import logger
 
 from icemet.cfg import Config
 
@@ -92,10 +92,6 @@ def main():
 		
 		if not args.no_images:
 			ctx.loop.create_task(Measure(ctx).run())
-	
-	# Garbage collection needed for some cameras
-	if not args.no_images:
-		loop.create_task(collect_garbage(quit, 2.0))
 	
 	# Run
 	try:

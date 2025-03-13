@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime, timezone
-import gc
 import logging
 import uuid
 
@@ -53,14 +52,6 @@ class Url:
 def datetime_utc(timestamp=None):
 	dt = datetime.utcnow() if timestamp is None else datetime.fromtimestamp(timestamp, timezone.utc)
 	return dt.replace(tzinfo=None)
-
-async def collect_garbage(quit, delay):
-	try:
-		while not quit.is_set():
-			gc.collect(generation=2)
-			await asyncio.sleep(delay)
-	except KeyboardInterrupt:
-		quit.set()
 
 def tmpfile():
 	return ".icemet-" + uuid.uuid4().hex

@@ -2,9 +2,6 @@ from icemet_sensor.util import logger, Url, tmpfile
 
 from icemet.file import File
 
-import aioftp
-import aiohttp
-
 import asyncio
 import os
 import time
@@ -66,13 +63,23 @@ class HTTP(Protocol):
 					if error:
 						raise ProtocolException(error)
 
+protocols = {}
+
+try:
+	import aioftp
+	protocols["ftp"] = FTP
+except:
+	pass
+
+try:
+	import aiohttp
+	protocols["https"] = HTTP
+	protocols["http"] = HTTP
+except:
+	pass
+
 def create_protocol(url):
 	url = Url(url)
-	protocols = {
-		"ftp": FTP,
-		"https": HTTP,
-		"http": HTTP
-	}
 	cls = protocols.get(url.scheme)
 	if not cls:
 		return None

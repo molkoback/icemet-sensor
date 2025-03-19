@@ -7,7 +7,6 @@ from icemet.cfg import Config
 
 import argparse
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import logging
 import os
 import shutil
@@ -22,7 +21,7 @@ _default_config_file = os.path.join(home_path, "icemet-sensor.yaml")
 
 def _parse_args():
 	parser = argparse.ArgumentParser("ICEMET-sensor")
-	parser.add_argument("-c", "--config", type=str, help="comma separated list of config files (default: {})".format(_default_config_file), metavar="str", default=_default_config_file)
+	parser.add_argument("-c", "--config", type=str, help="config file (default: {})".format(_default_config_file), metavar="str", default=_default_config_file)
 	parser.add_argument("-s", "--start", type=str, help="start time 'yyyy-mm-dd HH:MM:SS'", metavar="str")
 	parser.add_argument("--start_now", action="store_true", help="start at the next minute")
 	parser.add_argument("--start_next_10min", action="store_true", help="start at the next 10th minute")
@@ -67,37 +66,29 @@ def main():
 		os.makedirs(os.path.split(args.config)[0], exist_ok=True)
 		shutil.copy(os.path.join(data_path, "icemet-sensor.yaml"), args.config)
 		logger.info("Config file created '{}'".format(args.config))
+	cfg = Config(args.config)
 	
-	# Async objects
-	loop = asyncio.get_event_loop()
-	pool = ThreadPoolExecutor()
-	quit = asyncio.Event()
+	# Load plugins
+	plugins_paths = cfg.get("PLUGINS_PATHS", []) + [plugins_path]
+	logger.debug("Plugins paths: {}".format(", ".join(plugins_paths)))
+	plugins = PluginContainer(plugins_paths)
+	for name in cfg["PLUGINS"]:
+		hooks = plugins.load(name)
+		logger.debug("Plugin '{}' with {} hooks".format(name, hooks))
 	
-	# Create all instances
-	for file in args.config.split(","):
-		cfg = Config(file)
-		
-		# Load plugins
-		plugins_paths = cfg.get("PLUGINS_PATHS", []) + [plugins_path]
-		logger.debug("Plugins paths: {}".format(", ".join(plugins_paths)))
-		plugins = PluginContainer(plugins_paths)
-		for name in cfg["PLUGINS"]:
-			hooks = plugins.load(name)
-			logger.debug("Plugin '{}' with {} hooks".format(name, hooks))
-		
-		# Create context
-		ctx = Context(args, cfg, loop, pool, plugins, quit)
-		logger.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
-		loop.run_until_complete(plugins.call("on_init", ctx))
-		
-		if not args.no_images:
-			ctx.loop.create_task(Measure(ctx).run())
+	# Create context
+	ctx = Context(args, cfg, plugins)
+	logger.info("{} ({:02X})".format(cfg["SENSOR_TYPE"], cfg["SENSOR_ID"]))
+	ctx.loop.run_until_complete(plugins.call("on_init", ctx))
+	
+	if not args.no_images:
+		ctx.loop.create_task(Measure(ctx).run())
 	
 	# Run
 	try:
-		loop.run_until_complete(_collect())
+		ctx.loop.run_until_complete(_collect())
 		return 1
 	except KeyboardInterrupt:
-		quit.set()
-		loop.run_until_complete(_collect())
+		ctx.quit.set()
+		ctx.loop.run_until_complete(_collect())
 	return 0

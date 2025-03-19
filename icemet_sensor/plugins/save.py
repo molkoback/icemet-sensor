@@ -6,8 +6,6 @@ from icemet.pkg import create_package, name2ext
 import os
 import time
 
-savers = {}
-
 class Saver:
 	def __init__(self, ctx):
 		self.ctx = ctx
@@ -71,7 +69,7 @@ class Saver:
 		await self.ctx.loop.run_in_executor(self.ctx.pool, task, img)
 
 async def on_init(ctx):
-	savers[ctx.args.config] = Saver(ctx)
+	await ctx.set("saver", Saver(ctx))
 
 async def on_image(ctx, img):
-	await savers[ctx.args.config].process(img)
+	await (await ctx.get("saver")).process(img)

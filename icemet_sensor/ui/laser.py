@@ -17,7 +17,7 @@ def _create():
 	cfg = Config(args.cfg)
 	
 	plugins_paths = cfg.get("PLUGINS_PATHS", []) + [plugins_path]
-	plugins = PluginContainer(cfg["PLUGINS_PATHS"])
+	plugins = PluginContainer(plugins_paths)
 	for name in cfg["PLUGINS"]:
 		plugins.load(name)
 	

@@ -10,4 +10,5 @@ async def collect_garbage(quit, delay):
 		quit.set()
 
 async def on_init(ctx):
-	ctx.loop.create_task(collect_garbage(ctx.quit, 2.0))
+	delay = ctx.cfg.get("GC_DELAY", 2.0)
+	ctx.loop.create_task(collect_garbage(ctx.quit, delay))

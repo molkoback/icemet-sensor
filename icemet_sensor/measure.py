@@ -4,7 +4,8 @@ from icemet_sensor.util import datetime_utc, logger
 from icemet.img import Image, BGSubStack, CombineStack
 from icemet.file import FileStatus
 
-import cv2
+import torchvision.transforms.functional as tf
+from torchvision.transforms import InterpolationMode
 
 import asyncio
 from datetime import datetime
@@ -33,15 +34,19 @@ class Measure:
 	
 	async def _preproc(self, img):
 		# Crop
-		shape_w, shape_h = img.mat.shape[1], img.mat.shape[0]
-		crop = self.ctx.cfg.get("CROP", {"x": 0, "y": 0, "w": shape_w, "h": shape_h})
-		if crop["x"] != 0 or crop["y"] != 0 or crop["w"] != shape_w or crop["h"] != shape_h:
-			img.mat = img.mat[crop["y"]:crop["y"]+crop["h"], crop["x"]:crop["x"]+crop["w"]]
+		crop = self.ctx.cfg.get("CROP", None)
+		if not crop is None:
+			img.crop(crop["x"], crop["y"], crop["w"], crop["h"])
+		
+		# Scale
+		scale = self.ctx.cfg.get("SCALE", None)
+		if not scale is None:
+			img.scale(scale["w"], scale["h"])
 		
 		# Rotate
-		rot = self.ctx.cfg.get("ROTATE", 0)
-		if rot != 0:
-			img.mat = img.rotate(rot)
+		angle = self.ctx.cfg.get("ROTATE", 0)
+		if angle != 0:
+			img.rotate(angle)
 		
 		# Background subtraction
 		if not self._bgsub is None:
@@ -50,7 +55,7 @@ class Measure:
 			if self._bgsub.current().datetime < datetime_utc(self._time_next):
 				return None
 			img = self._bgsub.meddiv()
-		
+			
 			# Combine images
 			if self._combine_len > 1:
 				if self._combine is None:
@@ -81,7 +86,7 @@ class Measure:
 			datetime=res.datetime,
 			frame=0,
 			status=FileStatus.NOTEMPTY,
-			mat=res.image,
+			data=res.image,
 			params=res.params
 		)
 		

@@ -171,8 +171,8 @@ class SpinSingleCamera(SpinCamera):
 			self.cam.BeginAcquisition()
 			res = self.cam.GetNextImage(int(self.timeout * 1000))
 			datetime = self._datetime(res)
-			self.cam.EndAcquisition()
 			image = np.reshape(res.GetData(), (res.GetHeight(), res.GetWidth())).copy()
+			self.cam.EndAcquisition()
 			return CameraResult(image=image, datetime=datetime)
 		except:
 			return None

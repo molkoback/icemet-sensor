@@ -5,6 +5,8 @@ from icemet_sensor.util import logger
 
 from icemet.cfg import Config
 
+import torch
+
 import argparse
 import asyncio
 import logging
@@ -67,6 +69,11 @@ def main():
 		shutil.copy(os.path.join(data_path, "icemet-sensor.yaml"), args.config)
 		logger.info("Config file created '{}'".format(args.config))
 	cfg = Config(args.config)
+	
+	# Setup PyTorch
+	device = cfg.get("TORCH_DEVICE", "cpu")
+	torch.set_default_device(device)
+	logger.debug("PyTorch device {}".format(device))
 	
 	# Load plugins
 	plugins_paths = cfg.get("PLUGINS_PATHS", []) + [plugins_path]

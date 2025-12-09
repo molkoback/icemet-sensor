@@ -2,7 +2,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import os
 
-version = "3.0.0.dev"
+version = "3.0.0"
 home_path = os.path.join(os.path.expanduser("~"), ".icemet")
 data_path =  os.path.join(os.path.dirname(__file__), "data")
 plugins_path = os.path.join(os.path.dirname(__file__), "plugins")

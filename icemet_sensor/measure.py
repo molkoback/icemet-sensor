@@ -132,7 +132,6 @@ class Measure:
 			pass
 		except Exception as e:
 			logger.error(str(e))
-		self._pkg = None
 		await self.sensor.off()
 		self.sensor.close()
 		self.ctx.quit.set()

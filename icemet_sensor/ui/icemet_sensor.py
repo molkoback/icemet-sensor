@@ -30,23 +30,22 @@ def _parse_args():
 	parser.add_argument("--start_next_hour", action="store_true", help="start at the next hour")
 	parser.add_argument("--no_images", action="store_true", help="don't take images")
 	parser.add_argument("-d", "--debug", action="store_true", help="enable debug messages")
+	parser.add_argument("-q", "--quiet", action="store_true", help="disable info messages")
 	parser.add_argument("-V", "--version", action="store_true", help="print version information")
 	return parser.parse_args()
 
 def _init_logger(level):
 	if level == logging.DEBUG:
-		root = logging.getLogger()
 		fmt = "[%(asctime)s]<%(module)s:%(lineno)d>(%(levelname)s) %(message)s"
 	else:
-		root = logger
 		fmt = "[%(asctime)s](%(levelname)s) %(message)s"
 	
-	root.setLevel(level)
+	logger.setLevel(level)
 	ch = logging.StreamHandler(sys.stdout)
 	ch.setLevel(level)
 	formatter = logging.Formatter(fmt, datefmt="%H:%M:%S")
 	ch.setFormatter(formatter)
-	root.addHandler(ch)
+	logger.addHandler(ch)
 
 async def _collect():
 	tasks = asyncio.all_tasks()
@@ -61,7 +60,13 @@ def main():
 		return 0
 	
 	# Logging
-	_init_logger(logging.DEBUG if args.debug else logging.INFO)
+	if args.quiet:
+		level = logging.WARNING
+	elif args.debug:
+		level = logging.DEBUG
+	else:
+		level = logging.INFO
+	_init_logger(level)
 	
 	# Load config
 	if args.config == _default_config_file and not os.path.exists(args.config):

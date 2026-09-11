@@ -1,10 +1,12 @@
 import importlib.util
 import os
+import sys
 
 class PluginContainer:
 	def __init__(self, plugins_paths):
 		self._plugins_available = {}
 		for path in plugins_paths:
+			sys.path.insert(0, path)
 			for file in os.listdir(path):
 				name, ext = os.path.splitext(file)
 				if ext == ".py" and not name in self._plugins_available:
